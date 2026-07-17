@@ -51,17 +51,17 @@ function UUF:CreateUnitSecondaryPowerBar(unitFrame, unit)
     local secondaryPower = {Ticks = {}}
 
     secondaryPower.ContainerBackground = unitFrame.Container:CreateTexture(nil, "BACKGROUND")
-    secondaryPower.ContainerBackground:SetTexture(UUF.Media.Background)
+    secondaryPower.ContainerBackground:SetTexture(UUF:GetStatusBarTexture(unitFrame, unit, "Background"))
 
     for index = 1, maxPower do
         local bar = CreateFrame("StatusBar", nil, unitFrame.Container)
-        bar:SetStatusBarTexture(UUF.Media.Foreground)
+        bar:SetStatusBarTexture(UUF:GetStatusBarTexture(unitFrame, unit, "Foreground"))
         bar:SetMinMaxValues(0, 1)
         bar:Hide()
 
         bar.Background = bar:CreateTexture(nil, "BACKGROUND")
         bar.Background:SetAllPoints(bar)
-        bar.Background:SetTexture(UUF.Media.Background)
+        bar.Background:SetTexture(UUF:GetStatusBarTexture(unitFrame, unit, "Background"))
 
         secondaryPower[index] = bar
     end
@@ -159,7 +159,7 @@ function UUF:UpdateUnitSecondaryPowerBar(unitFrame, unit)
     secondaryPower.ContainerBackground:ClearAllPoints()
     secondaryPower.ContainerBackground:SetPoint(anchorPoint, unitFrame.Container, anchorPoint, 1, anchorY)
     secondaryPower.ContainerBackground:SetSize(totalWidth, secondaryPowerDB.Height)
-    secondaryPower.ContainerBackground:SetTexture(UUF.Media.Background)
+    secondaryPower.ContainerBackground:SetTexture(UUF:GetStatusBarTexture(unitFrame, unit, "Background"))
     secondaryPower.ContainerBackground:SetVertexColor(
         secondaryPowerDB.Background[1],
         secondaryPowerDB.Background[2],
@@ -187,8 +187,8 @@ function UUF:UpdateUnitSecondaryPowerBar(unitFrame, unit)
         bar:ClearAllPoints()
         bar:SetPoint(anchorPoint, unitFrame.Container, anchorPoint, 1 + ((index - 1) * segmentWidth), anchorY)
         bar:SetSize(segmentWidth, secondaryPowerDB.Height)
-        bar:SetStatusBarTexture(UUF.Media.Foreground)
-        bar.Background:SetTexture(UUF.Media.Background)
+        bar:SetStatusBarTexture(UUF:GetStatusBarTexture(unitFrame, unit, "Foreground"))
+        bar.Background:SetTexture(UUF:GetStatusBarTexture(unitFrame, unit, "Background"))
         bar.Background:SetVertexColor(
             secondaryPowerDB.Background[1],
             secondaryPowerDB.Background[2],

@@ -1,16 +1,17 @@
 local _, UUF = ...
 
 local function CreateUnitTag(unitFrame, unit, tagDB)
-	local GeneralDB = UUF.db.profile.General
 	local TagDB = UUF:GetUnitDB(unitFrame, unit).Tags[tagDB]
+	local FontsDB = UUF:GetFontSettings(unitFrame, unit)
+	local FontMedia = UUF:GetFontMedia(unitFrame, unit)
 
 	if not unitFrame.Tags[tagDB] then
 		unitFrame.Tags[tagDB] = unitFrame.HighLevelContainer:CreateFontString(UUF:FetchFrameName(unit) .. "_" .. tagDB, "ARTWORK", "GameFontNormal")
-		unitFrame.Tags[tagDB]:SetFont(UUF.Media.Font, TagDB.FontSize, GeneralDB.Fonts.FontFlag)
+		unitFrame.Tags[tagDB]:SetFont(FontMedia, TagDB.FontSize, FontsDB.FontFlag)
 		unitFrame.Tags[tagDB]:SetVertexColor(TagDB.Colour[1], TagDB.Colour[2], TagDB.Colour[3], 1)
-		if GeneralDB.Fonts.Shadow.Enabled then
-			unitFrame.Tags[tagDB]:SetShadowColor(GeneralDB.Fonts.Shadow.Colour[1], GeneralDB.Fonts.Shadow.Colour[2], GeneralDB.Fonts.Shadow.Colour[3], GeneralDB.Fonts.Shadow.Colour[4])
-			unitFrame.Tags[tagDB]:SetShadowOffset(GeneralDB.Fonts.Shadow.XPos, GeneralDB.Fonts.Shadow.YPos)
+		if FontsDB.Shadow.Enabled then
+			unitFrame.Tags[tagDB]:SetShadowColor(FontsDB.Shadow.Colour[1], FontsDB.Shadow.Colour[2], FontsDB.Shadow.Colour[3], FontsDB.Shadow.Colour[4])
+			unitFrame.Tags[tagDB]:SetShadowOffset(FontsDB.Shadow.XPos, FontsDB.Shadow.YPos)
 		else
 			unitFrame.Tags[tagDB]:SetShadowColor(0, 0, 0, 0)
 			unitFrame.Tags[tagDB]:SetShadowOffset(0, 0)
@@ -35,17 +36,18 @@ local function CreateUnitTag(unitFrame, unit, tagDB)
 end
 
 function UUF:UpdateUnitTag(unitFrame, unit, tagDB)
-	local GeneralDB = UUF.db.profile.General
 	local TagDB = UUF:GetUnitDB(unitFrame, unit).Tags[tagDB]
+	local FontsDB = UUF:GetFontSettings(unitFrame, unit)
+	local FontMedia = UUF:GetFontMedia(unitFrame, unit)
 
 	if not unitFrame.Tags[tagDB] then CreateUnitTag(unitFrame, unit, tagDB) end
 	if not unitFrame.Tags[tagDB] then return end
 
-	unitFrame.Tags[tagDB]:SetFont(UUF.Media.Font, TagDB.FontSize, GeneralDB.Fonts.FontFlag)
+	unitFrame.Tags[tagDB]:SetFont(FontMedia, TagDB.FontSize, FontsDB.FontFlag)
 	unitFrame.Tags[tagDB]:SetVertexColor(TagDB.Colour[1], TagDB.Colour[2], TagDB.Colour[3], 1)
-	if GeneralDB.Fonts.Shadow.Enabled then
-		unitFrame.Tags[tagDB]:SetShadowColor(GeneralDB.Fonts.Shadow.Colour[1], GeneralDB.Fonts.Shadow.Colour[2], GeneralDB.Fonts.Shadow.Colour[3], GeneralDB.Fonts.Shadow.Colour[4])
-		unitFrame.Tags[tagDB]:SetShadowOffset(GeneralDB.Fonts.Shadow.XPos, GeneralDB.Fonts.Shadow.YPos)
+	if FontsDB.Shadow.Enabled then
+		unitFrame.Tags[tagDB]:SetShadowColor(FontsDB.Shadow.Colour[1], FontsDB.Shadow.Colour[2], FontsDB.Shadow.Colour[3], FontsDB.Shadow.Colour[4])
+		unitFrame.Tags[tagDB]:SetShadowOffset(FontsDB.Shadow.XPos, FontsDB.Shadow.YPos)
 	else
 		unitFrame.Tags[tagDB]:SetShadowColor(0, 0, 0, 0)
 		unitFrame.Tags[tagDB]:SetShadowOffset(0, 0)

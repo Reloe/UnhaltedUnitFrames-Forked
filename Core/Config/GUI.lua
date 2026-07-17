@@ -370,8 +370,16 @@ end
 
 local function CreateFontSettings(containerParent)
     local Container = GUIWidgets.CreateInlineGroup(containerParent, "Fonts")
+    UUF.db.profile.General.Fonts.Raid = UUF.db.profile.General.Fonts.Raid or {}
+    UUF.db.profile.General.Fonts.Raid.Font = UUF.db.profile.General.Fonts.Raid.Font or UUF.db.profile.General.Fonts.Font
+    UUF.db.profile.General.Fonts.Raid.FontFlag = UUF.db.profile.General.Fonts.Raid.FontFlag or UUF.db.profile.General.Fonts.FontFlag
+    UUF.db.profile.General.Fonts.Raid.Shadow = UUF.db.profile.General.Fonts.Raid.Shadow or {}
+    if UUF.db.profile.General.Fonts.Raid.Shadow.Enabled == nil then UUF.db.profile.General.Fonts.Raid.Shadow.Enabled = UUF.db.profile.General.Fonts.Shadow.Enabled end
+    UUF.db.profile.General.Fonts.Raid.Shadow.Colour = UUF.db.profile.General.Fonts.Raid.Shadow.Colour or {unpack(UUF.db.profile.General.Fonts.Shadow.Colour)}
+    if UUF.db.profile.General.Fonts.Raid.Shadow.XPos == nil then UUF.db.profile.General.Fonts.Raid.Shadow.XPos = UUF.db.profile.General.Fonts.Shadow.XPos end
+    if UUF.db.profile.General.Fonts.Raid.Shadow.YPos == nil then UUF.db.profile.General.Fonts.Raid.Shadow.YPos = UUF.db.profile.General.Fonts.Shadow.YPos end
 
-    GUIWidgets.CreateInformationTag(Container,"Fonts are applied to all Unit Frames & Elements where appropriate. More fonts can be added via |cFF8080FFSharedMedia|r.")
+    GUIWidgets.CreateInformationTag(Container,"Fonts are applied to Unit Frames & Elements where appropriate. Raid Frames can use their own font settings. More fonts can be added via |cFF8080FFSharedMedia|r.")
 
     local FontDropdown = AG:Create("LSM30_Font")
     FontDropdown:SetList(LSM:HashTable("font"))
@@ -431,12 +439,76 @@ local function CreateFontSettings(containerParent)
     SimpleGroup:AddChild(YSlider)
 
     GUIWidgets.DeepDisable(SimpleGroup, not UUF.db.profile.General.Fonts.Shadow.Enabled, Toggle)
+
+    local RaidSimpleGroup = AG:Create("SimpleGroup")
+    RaidSimpleGroup:SetFullWidth(true)
+    RaidSimpleGroup:SetLayout("Flow")
+    Container:AddChild(RaidSimpleGroup)
+
+    GUIWidgets.CreateHeader(RaidSimpleGroup, "Raid Fonts")
+
+    local RaidFontDropdown = AG:Create("LSM30_Font")
+    RaidFontDropdown:SetList(LSM:HashTable("font"))
+    RaidFontDropdown:SetLabel("Raid Font")
+    RaidFontDropdown:SetValue(UUF.db.profile.General.Fonts.Raid.Font)
+    RaidFontDropdown:SetRelativeWidth(0.5)
+	RaidFontDropdown:SetCallback("OnValueChanged", function(widget, _, value) widget:SetValue(value) UUF.db.profile.General.Fonts.Raid.Font = value reloadRequired = true UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
+    RaidSimpleGroup:AddChild(RaidFontDropdown)
+
+    local RaidFontFlagDropdown = AG:Create("Dropdown")
+    RaidFontFlagDropdown:SetList({[""] = "None", ["OUTLINE"] = "Outline", ["THICKOUTLINE"] = "Thick Outline", ["MONOCHROME"] = "Monochrome", ["MONOCHROMEOUTLINE"] = "Monochrome Outline", ["MONOCHROMETHICKOUTLINE"] = "Monochrome Thick Outline", ["OUTLINE, SLUG"] = "Outline Slug"})
+    RaidFontFlagDropdown:SetLabel("Raid Font Flag")
+    RaidFontFlagDropdown:SetValue(UUF.db.profile.General.Fonts.Raid.FontFlag)
+    RaidFontFlagDropdown:SetRelativeWidth(0.5)
+	RaidFontFlagDropdown:SetCallback("OnValueChanged", function(widget, _, value) widget:SetValue(value) UUF.db.profile.General.Fonts.Raid.FontFlag = value reloadRequired = true UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
+    RaidSimpleGroup:AddChild(RaidFontFlagDropdown)
+
+    local RaidShadowToggle = AG:Create("CheckBox")
+    RaidShadowToggle:SetLabel("Enable Raid Font Shadows")
+    RaidShadowToggle:SetValue(UUF.db.profile.General.Fonts.Raid.Shadow.Enabled)
+    RaidShadowToggle:SetFullWidth(true)
+	RaidShadowToggle:SetCallback("OnValueChanged", function(_, _, value) UUF.db.profile.General.Fonts.Raid.Shadow.Enabled = value reloadRequired = true UUF:ResolveLSM() GUIWidgets.DeepDisable(RaidShadowGroup, not UUF.db.profile.General.Fonts.Raid.Shadow.Enabled) UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
+    RaidShadowToggle:SetRelativeWidth(0.5)
+    RaidSimpleGroup:AddChild(RaidShadowToggle)
+
+    local RaidShadowGroup = AG:Create("SimpleGroup")
+    RaidShadowGroup:SetFullWidth(true)
+    RaidShadowGroup:SetLayout("Flow")
+    RaidSimpleGroup:AddChild(RaidShadowGroup)
+
+    local RaidShadowColourPicker = AG:Create("ColorPicker")
+    RaidShadowColourPicker:SetLabel("Raid Shadow Colour")
+    RaidShadowColourPicker:SetColor(unpack(UUF.db.profile.General.Fonts.Raid.Shadow.Colour))
+    RaidShadowColourPicker:SetFullWidth(true)
+	RaidShadowColourPicker:SetCallback("OnValueChanged", function(_, _, r, g, b, a) UUF.db.profile.General.Fonts.Raid.Shadow.Colour = {r, g, b, a} reloadRequired = true UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
+    RaidShadowColourPicker:SetRelativeWidth(0.5)
+    RaidShadowGroup:AddChild(RaidShadowColourPicker)
+
+    local RaidShadowXSlider = AG:Create("Slider")
+    RaidShadowXSlider:SetLabel("Raid Shadow Offset X")
+    RaidShadowXSlider:SetValue(UUF.db.profile.General.Fonts.Raid.Shadow.XPos)
+    RaidShadowXSlider:SetSliderValues(-5, 5, 1)
+    RaidShadowXSlider:SetFullWidth(true)
+	RaidShadowXSlider:SetCallback("OnValueChanged", function(_, _, value) UUF.db.profile.General.Fonts.Raid.Shadow.XPos = value reloadRequired = true UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
+    RaidShadowXSlider:SetRelativeWidth(0.5)
+    RaidShadowGroup:AddChild(RaidShadowXSlider)
+
+    local RaidShadowYSlider = AG:Create("Slider")
+    RaidShadowYSlider:SetLabel("Raid Shadow Offset Y")
+    RaidShadowYSlider:SetValue(UUF.db.profile.General.Fonts.Raid.Shadow.YPos)
+    RaidShadowYSlider:SetSliderValues(-5, 5, 1)
+    RaidShadowYSlider:SetFullWidth(true)
+	RaidShadowYSlider:SetCallback("OnValueChanged", function(_, _, value) UUF.db.profile.General.Fonts.Raid.Shadow.YPos = value reloadRequired = true UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
+    RaidShadowYSlider:SetRelativeWidth(0.5)
+    RaidShadowGroup:AddChild(RaidShadowYSlider)
+
+    GUIWidgets.DeepDisable(RaidShadowGroup, not UUF.db.profile.General.Fonts.Raid.Shadow.Enabled)
 end
 
 local function CreateTextureSettings(containerParent)
     local Container = GUIWidgets.CreateInlineGroup(containerParent, "Textures")
 
-    GUIWidgets.CreateInformationTag(Container,"Textures are applied to all Unit Frames & Elements where appropriate. More textures can be added via |cFF8080FFSharedMedia|r.")
+    GUIWidgets.CreateInformationTag(Container,"Textures are applied to Unit Frames & Elements where appropriate. Raid Frames can use their own texture pair. More textures can be added via |cFF8080FFSharedMedia|r.")
 
     local ForegroundTextureDropdown = AG:Create("LSM30_Statusbar")
     ForegroundTextureDropdown:SetList(LSM:HashTable("statusbar"))
@@ -453,6 +525,22 @@ local function CreateTextureSettings(containerParent)
     BackgroundTextureDropdown:SetRelativeWidth(0.5)
     BackgroundTextureDropdown:SetCallback("OnValueChanged", function(widget, _, value) widget:SetValue(value) UUF.db.profile.General.Textures.Background = value UUF:ResolveLSM() UUF:UpdateAllUnitFrames() end)
     Container:AddChild(BackgroundTextureDropdown)
+
+    local RaidForegroundTextureDropdown = AG:Create("LSM30_Statusbar")
+    RaidForegroundTextureDropdown:SetList(LSM:HashTable("statusbar"))
+    RaidForegroundTextureDropdown:SetLabel("Raid Foreground Texture")
+    RaidForegroundTextureDropdown:SetValue(UUF.db.profile.General.Textures.RaidForeground or UUF.db.profile.General.Textures.Foreground)
+    RaidForegroundTextureDropdown:SetRelativeWidth(0.5)
+    RaidForegroundTextureDropdown:SetCallback("OnValueChanged", function(widget, _, value) widget:SetValue(value) UUF.db.profile.General.Textures.RaidForeground = value UUF:ResolveLSM() UUF:UpdateAllUnitFrames() end)
+    Container:AddChild(RaidForegroundTextureDropdown)
+
+    local RaidBackgroundTextureDropdown = AG:Create("LSM30_Statusbar")
+    RaidBackgroundTextureDropdown:SetList(LSM:HashTable("statusbar"))
+    RaidBackgroundTextureDropdown:SetLabel("Raid Background Texture")
+    RaidBackgroundTextureDropdown:SetValue(UUF.db.profile.General.Textures.RaidBackground or UUF.db.profile.General.Textures.Background)
+    RaidBackgroundTextureDropdown:SetRelativeWidth(0.5)
+    RaidBackgroundTextureDropdown:SetCallback("OnValueChanged", function(widget, _, value) widget:SetValue(value) UUF.db.profile.General.Textures.RaidBackground = value UUF:ResolveLSM() UUF:UpdateAllUnitFrames() end)
+    Container:AddChild(RaidBackgroundTextureDropdown)
 
     local MouseoverStyleDropdown = AG:Create("Dropdown")
     MouseoverStyleDropdown:SetList({["SELECT"] = "Set a Highlight Texture...", ["BORDER"] = "Border", ["OVERLAY"] = "Overlay", ["GRADIENT"] = "Gradient" })

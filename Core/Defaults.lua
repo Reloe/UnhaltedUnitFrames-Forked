@@ -28,6 +28,8 @@ local Defaults = {
             Textures = {
                 Foreground = "Better Blizzard",
                 Background = "Better Blizzard",
+                RaidForeground = "Better Blizzard",
+                RaidBackground = "Better Blizzard",
             },
             Range = {
                 Enabled = true,
@@ -55,7 +57,17 @@ local Defaults = {
                     Colour = {0, 0, 0, 1},
                     XPos = 0,
                     YPos = 0,
-                }
+                },
+                Raid = {
+                    Font = "Friz Quadrata TT",
+                    FontFlag = "OUTLINE, SLUG",
+                    Shadow = {
+                        Enabled = false,
+                        Colour = {0, 0, 0, 1},
+                        XPos = 0,
+                        YPos = 0,
+                    }
+                },
             },
             Colours = {
                 Reaction = {

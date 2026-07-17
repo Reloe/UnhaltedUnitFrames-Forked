@@ -27,11 +27,12 @@ local function GetAuraDB(unitFrame, unit, auraKey)
 	return AurasDB and AurasDB.Containers and AurasDB.Containers[auraKey]
 end
 
-local function ApplyFontStyle(fontString, anchorFrame, layout, fontSize, colour)
-	local FontsDB = UUF.db.profile.General.Fonts
+local function ApplyFontStyle(fontString, anchorFrame, layout, fontSize, colour, unitFrame, unit)
+	local FontsDB = UUF:GetFontSettings(unitFrame, unit)
+	local FontMedia = UUF:GetFontMedia(unitFrame, unit)
 	fontString:ClearAllPoints()
 	fontString:SetPoint(layout[1], anchorFrame, layout[2], layout[3], layout[4])
-	fontString:SetFont(UUF.Media.Font, fontSize, FontsDB.FontFlag)
+	fontString:SetFont(FontMedia, fontSize, FontsDB.FontFlag)
 	if colour then fontString:SetTextColor(unpack(colour)) end
 	if FontsDB.Shadow.Enabled then
 		fontString:SetShadowColor(unpack(FontsDB.Shadow.Colour))
@@ -119,13 +120,13 @@ local function ApplyAuraButtonStyle(button, unitFrame, unit, auraKey, size)
 	button.Cooldown:SetDrawBling(false)
 	button.Cooldown:SetReverse(true)
 	button.Cooldown:SetHideCountdownNumbers(true)
-	ApplyFontStyle(button.Count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour)
+	ApplyFontStyle(button.Count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour, unitFrame, unit)
 	button.Count:SetShown(not AuraDB.Count.HideStacks)
 
 	local CooldownTextDB = GetAuraDurationDB(unitFrame, unit, AuraDB)
 	local fontSize = CooldownTextDB.FontSize
 	if CooldownTextDB.ScaleByIconSize then fontSize = math.max(CooldownTextDB.FontSize * size / 36, 1) end
-	ApplyFontStyle(button.Time, button, CooldownTextDB.Layout, fontSize, CooldownTextDB.Colour)
+	ApplyFontStyle(button.Time, button, CooldownTextDB.Layout, fontSize, CooldownTextDB.Colour, unitFrame, unit)
 	ApplyAuraDurationText(button, CooldownTextDB)
 	button.Time:SetShown(not CooldownTextDB.HideDuration)
 
@@ -456,13 +457,13 @@ local function UpdateFakeAuras(container, unitFrame, unit, AuraDB, texture)
 		button:SetPoint(auraAnchor, container, auraAnchor, x, y)
 		button.Icon:SetTexture(texture)
 		button.Icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-		ApplyFontStyle(button.Count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour)
+		ApplyFontStyle(button.Count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour, unitFrame, unit)
 		button.Count:SetText(index)
 		button.Count:SetShown(not AuraDB.Count.HideStacks)
 		local CooldownTextDB = GetAuraDurationDB(unitFrame, unit, AuraDB)
 		local fontSize = CooldownTextDB.FontSize
 		if CooldownTextDB.ScaleByIconSize then fontSize = math.max(CooldownTextDB.FontSize * AuraDB.Size / 36, 1) end
-		ApplyFontStyle(button.Duration, button, CooldownTextDB.Layout, fontSize, CooldownTextDB.Colour)
+		ApplyFontStyle(button.Duration, button, CooldownTextDB.Layout, fontSize, CooldownTextDB.Colour, unitFrame, unit)
 		button.Duration:SetText("10m")
 		button.Duration:SetShown(not CooldownTextDB.HideDuration)
 		button:Show()

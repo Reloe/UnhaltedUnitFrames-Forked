@@ -73,7 +73,7 @@ function UUF:CreateUnitPowerBar(unitFrame, unit)
     local PowerBar = CreateFrame("StatusBar", UUF:FetchFrameName(unit) .. "_PowerBar", unitContainer)
     PowerBar:SetPoint("BOTTOMLEFT", unitContainer, "BOTTOMLEFT", 1, 1)
     PowerBar:SetSize(FrameDB.Width - 2, PowerBarDB.Height)
-    PowerBar:SetStatusBarTexture(UUF.Media.Foreground)
+    PowerBar:SetStatusBarTexture(UUF:GetStatusBarTexture(unitFrame, unit, "Foreground"))
     PowerBar:SetStatusBarColor(PowerBarDB.Foreground[1], PowerBarDB.Foreground[2], PowerBarDB.Foreground[3], PowerBarDB.Foreground[4] or 1)
     PowerBar:SetFrameLevel(unitContainer:GetFrameLevel() + 2)
     PowerBar.colorPower = PowerBarDB.ColourByType
@@ -91,7 +91,7 @@ function UUF:CreateUnitPowerBar(unitFrame, unit)
     PowerBar.Background = PowerBar:CreateTexture(UUF:FetchFrameName(unit) .. "_PowerBackground", "BACKGROUND")
     PowerBar.Background:SetPoint("BOTTOMLEFT", unitContainer, "BOTTOMLEFT", 1, 1)
     PowerBar.Background:SetSize(FrameDB.Width - 2, PowerBarDB.Height)
-    PowerBar.Background:SetTexture(UUF.Media.Background)
+    PowerBar.Background:SetTexture(UUF:GetStatusBarTexture(unitFrame, unit, "Background"))
     PowerBar.Background:SetVertexColor(PowerBarDB.Background[1], PowerBarDB.Background[2], PowerBarDB.Background[3], PowerBarDB.Background[4] or 1)
 
     if not PowerBar.PowerBarBorder then
@@ -133,7 +133,7 @@ function UUF:UpdateUnitPowerBar(unitFrame, unit)
         if unitFrame.Power then
             LayoutUnitPowerBar(unitFrame, unit, unitFrame:GetWidth())
             unitFrame.Power:SetStatusBarColor(PowerBarDB.Foreground[1], PowerBarDB.Foreground[2], PowerBarDB.Foreground[3], PowerBarDB.Foreground[4] or 1)
-            unitFrame.Power:SetStatusBarTexture(UUF.Media.Foreground)
+            unitFrame.Power:SetStatusBarTexture(UUF:GetStatusBarTexture(unitFrame, unit, "Foreground"))
             unitFrame.Power.colorPower = PowerBarDB.ColourByType
             unitFrame.Power.colorClass = PowerBarDB.ColourByClass
             unitFrame.Power.frequentUpdates = PowerBarDB.Smooth
@@ -146,7 +146,7 @@ function UUF:UpdateUnitPowerBar(unitFrame, unit)
 
         if unitFrame.Power.Background then
             unitFrame.Power.Background:SetVertexColor(PowerBarDB.Background[1], PowerBarDB.Background[2], PowerBarDB.Background[3], PowerBarDB.Background[4] or 1)
-            unitFrame.Power.Background:SetTexture(UUF.Media.Background)
+            unitFrame.Power.Background:SetTexture(UUF:GetStatusBarTexture(unitFrame, unit, "Background"))
         end
 
         unitFrame.Power:Show()

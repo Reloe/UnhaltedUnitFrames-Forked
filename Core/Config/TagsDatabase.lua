@@ -724,6 +724,7 @@ local PowerTags = {
         ["missingpp"] = "Missing Power",
 		["curpp:manapercent"] = "Mana as %",
 		["curpp:manapercent:healer"] = "Healer Mana %",
+		["curpp:manapercent:healer:colour"] = "Healer Mana % Colour",
 		["curpp:manapercent-with-sign:healer"] = "Healer Mana % Sign",
 		["curpp:manapercent-with-sign:healer:colour"] = "Healer Mana % Colour",
 		["curpp:manapercent:abbr"] = "Abbrev Mana as %",

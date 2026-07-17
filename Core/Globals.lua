@@ -210,10 +210,50 @@ end
 function UUF:ResolveLSM()
     local LSM = UUF.LSM
     local General = UUF.db.profile.General
+    General.Fonts.Raid = General.Fonts.Raid or {}
+    General.Fonts.Raid.Font = General.Fonts.Raid.Font or General.Fonts.Font
+    General.Fonts.Raid.FontFlag = General.Fonts.Raid.FontFlag or General.Fonts.FontFlag
+    General.Fonts.Raid.Shadow = General.Fonts.Raid.Shadow or {}
+    General.Fonts.Raid.Shadow.Enabled = General.Fonts.Raid.Shadow.Enabled == nil and General.Fonts.Shadow.Enabled or General.Fonts.Raid.Shadow.Enabled
+    General.Fonts.Raid.Shadow.Colour = General.Fonts.Raid.Shadow.Colour or {unpack(General.Fonts.Shadow.Colour)}
+    General.Fonts.Raid.Shadow.XPos = General.Fonts.Raid.Shadow.XPos == nil and General.Fonts.Shadow.XPos or General.Fonts.Raid.Shadow.XPos
+    General.Fonts.Raid.Shadow.YPos = General.Fonts.Raid.Shadow.YPos == nil and General.Fonts.Shadow.YPos or General.Fonts.Raid.Shadow.YPos
     UUF.Media = UUF.Media or {}
     UUF.Media.Font = LSM:Fetch("font", General.Fonts.Font) or STANDARD_TEXT_FONT
+    UUF.Media.RaidFont = LSM:Fetch("font", General.Fonts.Raid and General.Fonts.Raid.Font or General.Fonts.Font) or UUF.Media.Font
     UUF.Media.Foreground = LSM:Fetch("statusbar", General.Textures.Foreground) or "Interface\\RaidFrame\\Raid-Bar-Hp-Fill"
     UUF.Media.Background = LSM:Fetch("statusbar", General.Textures.Background) or "Interface\\Buttons\\WHITE8X8"
+    UUF.Media.RaidForeground = LSM:Fetch("statusbar", General.Textures.RaidForeground or General.Textures.Foreground) or UUF.Media.Foreground
+    UUF.Media.RaidBackground = LSM:Fetch("statusbar", General.Textures.RaidBackground or General.Textures.Background) or UUF.Media.Background
+end
+
+function UUF:GetStatusBarTexture(unitFrame, unit, textureType)
+    local configuredUnit = unitFrame and unitFrame.isAugmentationRaidFrame and "augmentation" or unitFrame and unitFrame.UUFConfiguredUnit or unit
+    local normalizedUnit = configuredUnit and UUF:GetNormalizedUnit(configuredUnit)
+    local useRaidTextures = normalizedUnit == "raid" or normalizedUnit == "augmentation"
+    if textureType == "Background" then
+        return useRaidTextures and UUF.Media.RaidBackground or UUF.Media.Background
+    end
+    return useRaidTextures and UUF.Media.RaidForeground or UUF.Media.Foreground
+end
+
+function UUF:GetFontSettings(unitFrame, unit)
+    local FontsDB = UUF.db.profile.General.Fonts
+    local configuredUnit = unitFrame and unitFrame.isAugmentationRaidFrame and "augmentation" or unitFrame and unitFrame.UUFConfiguredUnit or unit
+    local normalizedUnit = configuredUnit and UUF:GetNormalizedUnit(configuredUnit)
+    if normalizedUnit == "raid" or normalizedUnit == "augmentation" then
+        return FontsDB.Raid or FontsDB
+    end
+    return FontsDB
+end
+
+function UUF:GetFontMedia(unitFrame, unit)
+    local configuredUnit = unitFrame and unitFrame.isAugmentationRaidFrame and "augmentation" or unitFrame and unitFrame.UUFConfiguredUnit or unit
+    local normalizedUnit = configuredUnit and UUF:GetNormalizedUnit(configuredUnit)
+    if normalizedUnit == "raid" or normalizedUnit == "augmentation" then
+        return UUF.Media.RaidFont or UUF.Media.Font
+    end
+    return UUF.Media.Font
 end
 
 function UUF:GetCooldownDurationComponents(displayStyle, minValue)
@@ -256,15 +296,16 @@ function UUF:ApplyCooldownText(icon, textRegion, unit, unitFrame)
         return
     end
 
-    local FontsDB = UUF.db.profile.General.Fonts
+    local FontsDB = UUF:GetFontSettings(unitFrame, unit)
+    local fontMedia = UUF:GetFontMedia(unitFrame, unit)
     if CooldownTextDB.ScaleByIconSize then
         local iconWidth = icon:GetWidth()
         local scaleFactor = iconWidth > 0 and iconWidth / 36 or 1
         local fontSize = CooldownTextDB.FontSize * scaleFactor
         if fontSize < 1 then fontSize = 12 end
-        textRegion:SetFont(UUF.Media.Font, fontSize, FontsDB.FontFlag)
+        textRegion:SetFont(fontMedia, fontSize, FontsDB.FontFlag)
     else
-        textRegion:SetFont(UUF.Media.Font, CooldownTextDB.FontSize, FontsDB.FontFlag)
+        textRegion:SetFont(fontMedia, CooldownTextDB.FontSize, FontsDB.FontFlag)
     end
     textRegion:ClearAllPoints()
     textRegion:SetPoint(CooldownTextDB.Layout[1], icon, CooldownTextDB.Layout[2], CooldownTextDB.Layout[3], CooldownTextDB.Layout[4])
@@ -494,7 +535,8 @@ end
 
 function UUF:GetUnitDB(unitFrame, unit, units)
 	units = units or UUF.db.profile.Units
-	local normalizedUnit = unitFrame and unitFrame.isAugmentationRaidFrame and "augmentation" or UUF:GetNormalizedUnit(unit)
+	local configuredUnit = unitFrame and unitFrame.isAugmentationRaidFrame and "augmentation" or unitFrame and unitFrame.UUFConfiguredUnit or unit
+	local normalizedUnit = UUF:GetNormalizedUnit(configuredUnit)
 	return normalizedUnit == "augmentation" and units.raid.augmentation or units[normalizedUnit]
 end
 
