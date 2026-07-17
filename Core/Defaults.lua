@@ -147,6 +147,7 @@ local Defaults = {
                     BackgroundOpacity = 1,
                     DispelHighlight = {
                         Enabled = true,
+                        OnlyShowDispellableByPlayer = true,
                         Style = "HEALTHBAR",
                     },
                 },
@@ -391,6 +392,7 @@ local Defaults = {
                     BackgroundOpacity = 1,
                     DispelHighlight = {
                         Enabled = true,
+                        OnlyShowDispellableByPlayer = true,
                         Style = "HEALTHBAR",
                     },
                 },
@@ -780,6 +782,7 @@ local Defaults = {
                     BackgroundOpacity = 1,
                     DispelHighlight = {
                         Enabled = false,
+                        OnlyShowDispellableByPlayer = true,
                         Style = "GRADIENT",
                     },
                 },
@@ -1538,6 +1541,7 @@ local Defaults = {
                     BackgroundOpacity = 1,
                     DispelHighlight = {
                         Enabled = true,
+                        OnlyShowDispellableByPlayer = true,
                         Style = "HEALTHBAR",
                     },
                 },
@@ -1735,6 +1739,7 @@ local Defaults = {
                     BackgroundOpacity = 1,
                     DispelHighlight = {
                         Enabled = true,
+                        OnlyShowDispellableByPlayer = true,
                         Style = "HEALTHBAR",
                     },
                 },
@@ -1930,6 +1935,7 @@ local Defaults = {
                         BackgroundOpacity = 1,
                         DispelHighlight = {
                             Enabled = true,
+                            OnlyShowDispellableByPlayer = true,
                             Style = "HEALTHBAR",
                         },
 					},

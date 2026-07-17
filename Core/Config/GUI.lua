@@ -1137,6 +1137,14 @@ local function CreateFrameSettings(containerParent, unit, unitHasParent, updateC
         EnableDispelHighlightingToggle:SetCallback("OnValueChanged", function(_, _, value) HealthBarDB.DispelHighlight.Enabled = value updateCallback("HealthBar") end)
         DispelHighlightContainer:AddChild(EnableDispelHighlightingToggle)
 
+        if HealthBarDB.DispelHighlight.OnlyShowDispellableByPlayer == nil then HealthBarDB.DispelHighlight.OnlyShowDispellableByPlayer = true end
+        local OnlyShowDispellableByPlayerToggle = AG:Create("CheckBox")
+        OnlyShowDispellableByPlayerToggle:SetLabel("Only Highlight Dispellable Types")
+        OnlyShowDispellableByPlayerToggle:SetValue(HealthBarDB.DispelHighlight.OnlyShowDispellableByPlayer)
+        OnlyShowDispellableByPlayerToggle:SetRelativeWidth(0.5)
+        OnlyShowDispellableByPlayerToggle:SetCallback("OnValueChanged", function(_, _, value) HealthBarDB.DispelHighlight.OnlyShowDispellableByPlayer = value updateCallback("HealthBar") end)
+        DispelHighlightContainer:AddChild(OnlyShowDispellableByPlayerToggle)
+
         local DispelHighlightStyleDropdown = AG:Create("Dropdown")
         DispelHighlightStyleDropdown:SetList({["HEALTHBAR"] = "Health Bar", ["GRADIENT"] = "Gradient" })
         DispelHighlightStyleDropdown:SetLabel("Highlight Style")

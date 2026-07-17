@@ -81,16 +81,18 @@ function UUF:UpdateUnitDispelHighlight(unitFrame, unit)
 	state.Unit = unit
 	local unitToken = unitFrame.unit
 	if not unitToken then unitToken = unit == "partyplayer" and "player" or unit end
-	local dispelTypes = UUF.LD:GetMyDispelTypes()
+	local DispelHighlightDB = UUF:GetUnitDB(unitFrame, unit).HealthBar.DispelHighlight
+	local onlyShowDispellableByPlayer = DispelHighlightDB.OnlyShowDispellableByPlayer ~= false
+	local dispelTypes = onlyShowDispellableByPlayer and UUF.LD:GetMyDispelTypes() or nil
 	for dispelType, slotKey in pairs(state.Slots) do
-		local typeEnabled = dispelTypes[dispelType] and true or false
+		local typeEnabled = not onlyShowDispellableByPlayer or dispelTypes and dispelTypes[dispelType] and true or false
 		if state.EnabledTypes[dispelType] ~= typeEnabled then
 			state.EnabledTypes[dispelType] = typeEnabled
 			container:SetAuraSlotCandidateFilters(slotKey, typeEnabled and DispelCandidateFilters[dispelType] or DisabledCandidateFilters)
 		end
 	end
 	local canAssist = UnitCanAssist("player", unitToken)
-	local enabled = UUF:GetUnitDB(unitFrame, unit).HealthBar.DispelHighlight.Enabled and not UUF:IsSecretValue(canAssist) and canAssist
+	local enabled = DispelHighlightDB.Enabled and not UUF:IsSecretValue(canAssist) and canAssist
 	container:SetUnit(unitToken)
 	container:SetShown(enabled)
 	if not enabled then return end
