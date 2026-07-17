@@ -1034,6 +1034,28 @@ local function CreateFrameSettings(containerParent, unit, unitHasParent, updateC
         ColourContainer:AddChild(ShowPlayerToggle)
     end
 
+    if unit == "raid" then
+        local UseRaidStyleForPartyToggle = AG:Create("CheckBox")
+        UseRaidStyleForPartyToggle:SetLabel("Use Raid-Frame Style for Party")
+        UseRaidStyleForPartyToggle:SetValue(FrameDB.UseRaidStyleForParty)
+        UseRaidStyleForPartyToggle:SetRelativeWidth(primaryToggleWidth)
+        UseRaidStyleForPartyToggle:SetCallback("OnValueChanged", function(_, _, value)
+            StaticPopupDialogs["UUF_RELOAD_UI"] = {
+                text = "You must reload to apply this change, do you want to reload now?",
+                button1 = "Reload Now",
+                button2 = "Later",
+                showAlert = true,
+                OnAccept = function() FrameDB.UseRaidStyleForParty = value C_UI.Reload() end,
+                OnCancel = function() UseRaidStyleForPartyToggle:SetValue(FrameDB.UseRaidStyleForParty) containerParent:DoLayout() end,
+                timeout = 0,
+                whileDead = true,
+                hideOnEscape = true,
+            }
+            StaticPopup_Show("UUF_RELOAD_UI")
+        end)
+        ColourContainer:AddChild(UseRaidStyleForPartyToggle)
+    end
+
     local SmoothUpdatesToggle = AG:Create("CheckBox")
     SmoothUpdatesToggle:SetLabel("Smooth Updates")
     SmoothUpdatesToggle:SetValue(HealthBarDB.Smooth ~= false)

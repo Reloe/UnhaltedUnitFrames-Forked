@@ -20,7 +20,7 @@ end
 function UUF:RegisterRaidFrame(unitFrame)
 	if not unitFrame or unitFrame.isUUFUnitFrame then return end
 	unitFrame.isUUFUnitFrame = true
-	local raidFrames = unitFrame.isAugmentationRaidFrame and UUF.AUGMENTATION_RAID_FRAMES or UUF.RAID_FRAMES
+	local raidFrames = unitFrame.isAugmentationRaidFrame and UUF.AUGMENTATION_RAID_FRAMES or unitFrame.isRaidStylePartyFrame and UUF.RAID_PARTY_FRAMES or UUF.RAID_FRAMES
 	raidFrames[#raidFrames + 1] = unitFrame
 end
 
@@ -29,6 +29,16 @@ function UUF:ForEachRaidFrame(callback, includeInactive, includeTestFrames, ...)
 		if raidFrame and (not raidFrame.isTestFrame or includeTestFrames) then
 			local assignedUnit = raidFrame:GetAttribute("unit")
 			local unit = assignedUnit or includeInactive and (raidFrame.isTestFrame and "raid" .. raidFrame.testIndex or raidFrame.UUFConfiguredUnit)
+			callback(raidFrame, unit, assignedUnit, ...)
+		end
+	end
+end
+
+function UUF:ForEachRaidStylePartyFrame(callback, includeInactive, ...)
+	for _, raidFrame in ipairs(UUF.RAID_PARTY_FRAMES) do
+		if raidFrame then
+			local assignedUnit = raidFrame:GetAttribute("unit")
+			local unit = assignedUnit or includeInactive and raidFrame.UUFConfiguredUnit
 			callback(raidFrame, unit, assignedUnit, ...)
 		end
 	end
@@ -213,9 +223,136 @@ function UUF:SpawnAugmentationRaidFrames()
 	UUF:UpdateAugmentationRaidFrames()
 end
 
+local function HideNormalPartyFrames()
+	if UUF.PARTY_CONTAINER then
+		if not InCombatLockdown() then UnregisterStateDriver(UUF.PARTY_CONTAINER, "visibility") end
+		UUF.PARTY_CONTAINER:Hide()
+	end
+	for _, partyFrame in ipairs(UUF.PARTY_FRAMES) do
+		UUF:UnregisterRangeFrame(partyFrame)
+		UUF:UnregisterTargetGlowIndicatorFrame(partyFrame)
+		partyFrame.UUFGroupUnit = nil
+		if not InCombatLockdown() then UnregisterUnitWatch(partyFrame) end
+		if not InCombatLockdown() or not partyFrame:IsProtected() then partyFrame:Hide() end
+	end
+end
+
+function UUF:LayoutRaidStylePartyFrames()
+	local RaidDB = UUF.db.profile.Units.raid
+	if not RaidDB or not RaidDB.Frame or not UUF.RAID_PARTY_CONTAINER or not UUF.RAID_PARTY_HEADER then return end
+	local Frame = RaidDB.Frame
+	local unitGrowth = (Frame.GrowthDirection or "RIGHT_DOWN"):match("^(%a+)_") or "RIGHT"
+	local spacing = Frame.Layout[5] or 0
+	local headerWidth = (unitGrowth == "UP" or unitGrowth == "DOWN") and Frame.Width or (Frame.Width + spacing) * UUF.MAX_RAID_FRAMES_PER_GROUP - spacing
+	local headerHeight = (unitGrowth == "UP" or unitGrowth == "DOWN") and (Frame.Height + spacing) * UUF.MAX_RAID_FRAMES_PER_GROUP - spacing or Frame.Height
+	local point = unitGrowth == "RIGHT" and "RIGHT" or unitGrowth == "UP" and "TOP" or unitGrowth == "DOWN" and "BOTTOM" or "LEFT"
+	local unitXOffset = unitGrowth == "RIGHT" and -spacing or unitGrowth == "LEFT" and spacing or 0
+	local unitYOffset = unitGrowth == "UP" and -spacing or unitGrowth == "DOWN" and spacing or 0
+
+	UUF.RAID_PARTY_CONTAINER:ClearAllPoints()
+	UUF.RAID_PARTY_CONTAINER:SetPoint(Frame.Layout[1], UIParent, Frame.Layout[2], Frame.Layout[3], Frame.Layout[4])
+	UUF.RAID_PARTY_CONTAINER:SetFrameStrata(Frame.FrameStrata)
+	UUF.RAID_PARTY_CONTAINER:SetSize(math.max(headerWidth, Frame.Width), math.max(headerHeight, Frame.Height))
+
+	local header = UUF.RAID_PARTY_HEADER
+	for childIndex = 1, UUF.MAX_RAID_FRAMES_PER_GROUP do
+		local child = header:GetAttribute("child" .. childIndex)
+		if child then
+			child:ClearAllPoints()
+			child:SetSize(Frame.Width, Frame.Height)
+			child:SetFrameStrata(Frame.FrameStrata)
+		end
+	end
+	header:SetAttribute("point", point)
+	header:SetAttribute("xOffset", unitXOffset)
+	header:SetAttribute("yOffset", unitYOffset)
+	header:SetAttribute("initial-width", Frame.Width)
+	header:SetAttribute("initial-height", Frame.Height)
+	header:SetAttribute("oUF-initialConfigFunction", ("self:SetWidth(%s); self:SetHeight(%s)"):format(Frame.Width, Frame.Height))
+	header:SetAttribute("unitsPerColumn", UUF.MAX_RAID_FRAMES_PER_GROUP)
+	header:SetAttribute("maxColumns", 1)
+	header:SetAttribute("sortMethod", Frame.SortBy == "INDEX" and "INDEX" or nil)
+	header:SetFrameStrata(Frame.FrameStrata)
+	header:SetSize(headerWidth, headerHeight)
+	header:ClearAllPoints()
+	local horizontalAnchor = unitGrowth == "RIGHT" and "RIGHT" or "LEFT"
+	local verticalAnchor = unitGrowth == "DOWN" and "BOTTOM" or "TOP"
+	header:SetPoint(verticalAnchor .. horizontalAnchor, UUF.RAID_PARTY_CONTAINER, verticalAnchor .. horizontalAnchor)
+end
+
+function UUF:SpawnRaidStylePartyFrames()
+	local RaidDB = UUF.db.profile.Units.raid
+	if not UUF:UseRaidStyleForParty() then return end
+	UUF:RegisterRaidStylePartyStyle()
+	oUF:SetActiveStyle(UUF:FetchFrameName("raidparty"))
+	if not UUF.RAID_PARTY_CONTAINER then
+		UUF.RAID_PARTY_CONTAINER = CreateFrame("Frame", "UUF_RaidPartyContainer", UIParent, "BackdropTemplate")
+		UUF.RAID_PARTY_CONTAINER:SetBackdrop(UUF.BACKDROP)
+		UUF.RAID_PARTY_CONTAINER:SetBackdropColor(0, 0, 0, 0)
+		UUF.RAID_PARTY_CONTAINER:SetBackdropBorderColor(0, 0, 0, 0)
+	end
+	if not UUF.RAID_PARTY_HEADER then
+		local FrameDB = RaidDB.Frame
+		local unitGrowth = (FrameDB.GrowthDirection or "RIGHT_DOWN"):match("^(%a+)_") or "RIGHT"
+		local spacing = FrameDB.Layout[5] or 0
+		local point = unitGrowth == "RIGHT" and "RIGHT" or unitGrowth == "UP" and "TOP" or unitGrowth == "DOWN" and "BOTTOM" or "LEFT"
+		local unitXOffset = unitGrowth == "RIGHT" and -spacing or unitGrowth == "LEFT" and spacing or 0
+		local unitYOffset = unitGrowth == "UP" and -spacing or unitGrowth == "DOWN" and spacing or 0
+		UUF.RAID_PARTY_HEADER = oUF:SpawnHeader("UUF_RaidPartyHeader", nil,
+			"showRaid", false,
+			"showParty", true,
+			"showPlayer", true,
+			"showSolo", false,
+			"initial-width", FrameDB.Width,
+			"initial-height", FrameDB.Height,
+			"oUF-initialConfigFunction", ("self:SetWidth(%s); self:SetHeight(%s)"):format(FrameDB.Width, FrameDB.Height),
+			"point", point,
+			"xOffset", unitXOffset,
+			"yOffset", unitYOffset,
+			"unitsPerColumn", UUF.MAX_RAID_FRAMES_PER_GROUP,
+			"maxColumns", 1,
+			"sortMethod", FrameDB.SortBy == "INDEX" and "INDEX" or nil
+		)
+		UUF.RAID_PARTY_HEADER:SetNumAuraContainers(UUF.MAX_AURA_CONTAINERS)
+		UUF.RAID_PARTY_HEADER:SetParent(UUF.RAID_PARTY_CONTAINER)
+		UUF.RAID_PARTY_HEADER:SetVisibility("party")
+	end
+	RegisterStateDriver(UUF.RAID_PARTY_CONTAINER, "visibility", "[group:party,nogroup:raid] show; hide")
+	HideNormalPartyFrames()
+	UUF:UpdateRaidStylePartyFrames()
+end
+
+function UUF:UpdateRaidStylePartyFrames()
+	if not UUF:UseRaidStyleForParty() then
+		if UUF.RAID_PARTY_CONTAINER then
+			if not InCombatLockdown() then UnregisterStateDriver(UUF.RAID_PARTY_CONTAINER, "visibility") end
+			UUF.RAID_PARTY_CONTAINER:Hide()
+		end
+		return
+	end
+	if not UUF.RAID_PARTY_CONTAINER or not UUF.RAID_PARTY_HEADER then return UUF:SpawnRaidStylePartyFrames() end
+	local RaidDB = UUF.db.profile.Units.raid
+	RegisterStateDriver(UUF.RAID_PARTY_CONTAINER, "visibility", "[group:party,nogroup:raid] show; hide")
+	HideNormalPartyFrames()
+	UUF:ForEachRaidStylePartyFrame(function(raidFrame, unit, assignedUnit)
+		if not assignedUnit then
+			UUF:UnregisterRangeFrame(raidFrame)
+			UUF:UnregisterTargetGlowIndicatorFrame(raidFrame)
+			raidFrame.UUFGroupUnit = nil
+			return
+		end
+		raidFrame:SetSize(RaidDB.Frame.Width, RaidDB.Frame.Height)
+		raidFrame:SetFrameStrata(RaidDB.Frame.FrameStrata)
+		UUF:UpdateUnitFrame(raidFrame, assignedUnit)
+		raidFrame.UUFGroupUnit = assignedUnit
+	end, true)
+	UUF:LayoutRaidStylePartyFrames()
+end
+
 function UUF:SpawnGroupFrame(groupType)
 	local FrameDB = UUF.db.profile.Units[groupType].Frame
 	if groupType == "party" then
+		if UUF:UseRaidStyleForParty() then return UUF:SpawnRaidStylePartyFrames() end
 		if not UUF.PARTY_CONTAINER then
 			UUF.PARTY_CONTAINER = CreateFrame("Frame", "UUF_PartyContainer", UIParent, "BackdropTemplate")
 			UUF.PARTY_CONTAINER:SetBackdrop(UUF.BACKDROP)
@@ -303,6 +440,7 @@ function UUF:SpawnGroupFrame(groupType)
 end
 
 function UUF:UpdateGroupFrame(groupType)
+	if groupType == "party" and UUF:UseRaidStyleForParty() then return UUF:UpdateRaidStylePartyFrames() end
 	local UnitDB = UUF.db.profile.Units[groupType]
 	if not UnitDB or not UnitDB.Enabled then
 		local container = groupType == "party" and UUF.PARTY_CONTAINER or UUF.RAID_CONTAINER
@@ -362,6 +500,30 @@ function UUF:UpdateGroupFrame(groupType)
 end
 
 function UUF:UpdateGroupIndicators(groupType, onlyUpdateRoles)
+	if groupType == "party" and UUF:UseRaidStyleForParty() then
+		local UnitDB = UUF.db.profile.Units.raid
+		if not UnitDB or not UnitDB.Enabled then return end
+		UUF:ForEachRaidStylePartyFrame(function(raidFrame, unit)
+			if unit and not unit:match("^raidparty") then
+				if not onlyUpdateRoles then
+					UUF:RegisterRangeFrame(raidFrame, unit)
+					UUF:RegisterTargetGlowIndicatorFrame(raidFrame, unit)
+					if raidFrame.UUFGroupUnit ~= unit then
+						raidFrame.UUFGroupUnit = unit
+						if raidFrame.DispelHighlight then UUF:UpdateUnitDispelHighlight(raidFrame, unit) end
+					end
+				end
+				if UnitDB.PowerBar.Enabled and UnitDB.PowerBar.OnlyShowHealers then UUF:UpdateUnitPowerBar(raidFrame, unit) end
+				UUF:UpdateUnitRoleIndicator(raidFrame, unit)
+			elseif not onlyUpdateRoles then
+				UUF:UnregisterRangeFrame(raidFrame)
+				UUF:UnregisterTargetGlowIndicatorFrame(raidFrame)
+				raidFrame.UUFGroupUnit = nil
+			end
+		end, false)
+		UUF:LayoutRaidStylePartyFrames()
+		return
+	end
 	local UnitDB = UUF.db.profile.Units[groupType]
 	if not UnitDB or not UnitDB.Enabled then return end
 	if groupType == "party" then
@@ -416,6 +578,7 @@ function UUF:UpdateGroupIndicators(groupType, onlyUpdateRoles)
 end
 
 function UUF:LayoutGroupFrames(groupType)
+	if groupType == "party" and UUF:UseRaidStyleForParty() then return UUF:LayoutRaidStylePartyFrames() end
 	local Frame = UUF.db.profile.Units[groupType].Frame
 	if groupType == "party" then
 		if not UUF.PARTY_CONTAINER or #UUF.PARTY_FRAMES == 0 then return end

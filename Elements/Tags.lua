@@ -105,6 +105,7 @@ function UUF:UpdateUnitTags(unit, tagName)
 		UpdateFrameTags(UUF.PARTYPLAYER, "partyplayer")
 	elseif unit == "raid" then
 		UUF:ForEachRaidFrame(UpdateFrameTags, true, UUF.RAID_TEST_MODE)
+		UUF:ForEachRaidStylePartyFrame(UpdateFrameTags, true)
 	elseif unit == "augmentation" then
 		UUF:ForEachAugmentationRaidFrame(UpdateFrameTags, false)
 	else

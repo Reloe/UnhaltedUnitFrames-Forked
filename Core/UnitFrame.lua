@@ -1,7 +1,9 @@
 local _, UUF = ...
 local oUF = UUF.oUF
 local raidFrameIndex = 0
+local raidPartyFrameIndex = 0
 local raidStyleRegistered = false
+local raidPartyStyleRegistered = false
 
 local function ApplyScripts(unitFrame)
     unitFrame:RegisterForClicks("AnyUp")
@@ -9,6 +11,16 @@ local function ApplyScripts(unitFrame)
     unitFrame:SetAttribute("*type2", "togglemenu")
     unitFrame:HookScript("OnEnter", UnitFrame_OnEnter)
     unitFrame:HookScript("OnLeave", UnitFrame_OnLeave)
+end
+
+function UUF:RegisterRaidStylePartyStyle()
+	if raidPartyStyleRegistered then return end
+	oUF:RegisterStyle(UUF:FetchFrameName("raidparty"), function(unitFrame)
+		raidPartyFrameIndex = raidPartyFrameIndex + 1
+		unitFrame.isRaidStylePartyFrame = true
+		UUF:CreateUnitFrame(unitFrame, "raidparty" .. raidPartyFrameIndex)
+	end)
+	raidPartyStyleRegistered = true
 end
 
 function UUF:CreateUnitFrame(unitFrame, unit)
@@ -100,6 +112,12 @@ end
 function UUF:SpawnUnitFrame(unit)
     local UnitDB = UUF.db.profile.Units[UUF:GetNormalizedUnit(unit)]
 	local augmentationEnabled = unit == "raid" and UUF.db.profile.Units.raid.augmentation.Enabled and UUF:IsAugmentationEvoker()
+	if unit == "party" and UUF:UseRaidStyleForParty() then
+		if UnitDB and UnitDB.ForceHideBlizzard then oUF:DisableBlizzard(unit) end
+		UUF:RegisterRaidStylePartyStyle()
+		oUF:SetActiveStyle(UUF:FetchFrameName("raidparty"))
+		return UUF:SpawnRaidStylePartyFrames()
+	end
 	if not UnitDB or (not UnitDB.Enabled and not augmentationEnabled) then
         if UnitDB and UnitDB.ForceHideBlizzard then
 			if unit == "raid" then UUF:HideBlizzardRaidFrames() else oUF:DisableBlizzard(unit) end
@@ -182,13 +200,14 @@ end
 
 function UUF:UpdateUnitFrame(unitFrame, unit)
     local UnitDB = UUF:GetUnitDB(unitFrame, unit)
-    local isPlayer = unit == "player"
-    local isTarget = unit == "target"
-    local isFocus = unit == "focus"
-    local isTargetTarget = unit == "targettarget"
-    local isFocusTarget = unit == "focustarget"
-    local isParty = UUF:GetNormalizedUnit(unit) == "party"
-    local isRaid = UUF:GetNormalizedUnit(unit) == "raid"
+	local frameUnit = unitFrame and unitFrame.UUFConfiguredUnit or unit
+    local isPlayer = frameUnit == "player"
+    local isTarget = frameUnit == "target"
+    local isFocus = frameUnit == "focus"
+    local isTargetTarget = frameUnit == "targettarget"
+    local isFocusTarget = frameUnit == "focustarget"
+    local isParty = UUF:GetNormalizedUnit(frameUnit) == "party"
+    local isRaid = UUF:GetNormalizedUnit(frameUnit) == "raid"
 
     if UnitDB.CastBar and not isTargetTarget and not isFocusTarget then UUF:UpdateUnitCastBar(unitFrame, unit) end
     UUF:UpdateUnitHealthBar(unitFrame, unit)

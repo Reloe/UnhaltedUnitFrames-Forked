@@ -11,6 +11,7 @@ UUF.MAX_BOSS_FRAMES = 5
 UUF.PARTY_FRAMES = {}
 UUF.MAX_PARTY_FRAMES = 4
 UUF.RAID_FRAMES = {}
+UUF.RAID_PARTY_FRAMES = {}
 UUF.AUGMENTATION_RAID_FRAMES = {}
 UUF.RAID_TEST_FRAMES = {}
 UUF.RAID_HEADERS = {}
@@ -199,11 +200,13 @@ function UUF:FetchFrameName(unit)
         ["party"] = "UUF_Party",
         ["partyplayer"] = "UUF_PartyPlayer",
         ["raid"] = "UUF_Raid",
+        ["raidparty"] = "UUF_RaidParty",
     }
     if not unit then return end
     if unit:match("^boss(%d+)$") then local unitID = unit:match("^boss(%d+)$") return "UUF_Boss" .. unitID end
     if unit:match("^party(%d+)$") then local unitID = unit:match("^party(%d+)$") return "UUF_Party" .. unitID end
     if unit:match("^raid(%d+)$") then local unitID = unit:match("^raid(%d+)$") return "UUF_Raid" .. unitID end
+    if unit:match("^raidparty(%d+)$") then local unitID = unit:match("^raidparty(%d+)$") return "UUF_RaidParty" .. unitID end
     return UnitToFrame[unit]
 end
 
@@ -529,8 +532,13 @@ function UUF:GetReactionColour(reaction)
 end
 
 function UUF:GetNormalizedUnit(unit)
-    local normalizedUnit = unit == "vehicle" and "player" or unit == "partyplayer" and "party" or unit:match("^boss%d+$") and "boss" or unit:match("^party%d+$") and "party" or unit:match("^raid%d+$") and "raid" or unit
+    local normalizedUnit = unit == "vehicle" and "player" or unit == "partyplayer" and "party" or unit:match("^boss%d+$") and "boss" or unit:match("^party%d+$") and "party" or unit:match("^raid%d+$") and "raid" or unit:match("^raidparty%d+$") and "raid" or unit
     return normalizedUnit
+end
+
+function UUF:UseRaidStyleForParty()
+	local RaidDB = UUF.db and UUF.db.profile and UUF.db.profile.Units and UUF.db.profile.Units.raid
+	return RaidDB and RaidDB.Enabled and RaidDB.Frame and RaidDB.Frame.UseRaidStyleForParty
 end
 
 function UUF:GetUnitDB(unitFrame, unit, units)

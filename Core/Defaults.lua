@@ -1720,6 +1720,7 @@ local Defaults = {
                     Layout = {"LEFT", "LEFT", 1.1000000000004, 0.10000000000036, 1},
                     GrowthDirection = "LEFT_DOWN",
                     SortBy = "GROUP",
+                    UseRaidStyleForParty = false,
                     AutoAdjustGroups = false,
                     Groups = {[1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] = true, [7] = false, [8] = false},
                     FrameStrata = "LOW",
