@@ -3337,7 +3337,11 @@ local function GetAuraContainerTreeLabel(auraKey, AuraDB)
 end
 
 local function EnsureAuraContainerDurationDB(unit, AuraDB)
-	if AuraDB.Duration then return AuraDB.Duration end
+	if AuraDB.Duration then
+		if AuraDB.Duration.ShowDecimalSeconds == nil then AuraDB.Duration.ShowDecimalSeconds = AuraDB.Duration.ShowDecimalsUnderThree or false end
+		if AuraDB.Duration.DecimalThreshold == nil then AuraDB.Duration.DecimalThreshold = 3 end
+		return AuraDB.Duration
+	end
 	local SourceDB = UUF.db.profile.General.CooldownText
 	if SourceDB.Advanced then SourceDB = GetUnitDB(unit).Auras.AuraDuration end
 	AuraDB.Duration = {
@@ -3345,6 +3349,8 @@ local function EnsureAuraContainerDurationDB(unit, AuraDB)
 		Layout = {SourceDB.Layout[1], SourceDB.Layout[2], SourceDB.Layout[3], SourceDB.Layout[4]},
 		FontSize = SourceDB.FontSize,
 		ScaleByIconSize = SourceDB.ScaleByIconSize,
+		ShowDecimalSeconds = false,
+		DecimalThreshold = 3,
 	}
 	if SourceDB.Colour then AuraDB.Duration.Colour = {SourceDB.Colour[1], SourceDB.Colour[2], SourceDB.Colour[3], SourceDB.Colour[4]} end
 	return AuraDB.Duration
@@ -3676,10 +3682,11 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
 
     local HideDurationToggle = AG:Create("CheckBox")
 	local FontSizeSlider
+	local DecimalThresholdSlider
     HideDurationToggle:SetLabel("Hide Duration")
     HideDurationToggle:SetValue(DurationDB.HideDuration or false)
     HideDurationToggle:SetRelativeWidth(0.5)
-    HideDurationToggle:SetCallback("OnValueChanged", function(_, _, value) DurationDB.HideDuration = value UpdateAuras() GUIWidgets.DeepDisable(DurationContainer, value, HideDurationToggle) FontSizeSlider:SetDisabled(value or DurationDB.ScaleByIconSize) end)
+    HideDurationToggle:SetCallback("OnValueChanged", function(_, _, value) DurationDB.HideDuration = value UpdateAuras() GUIWidgets.DeepDisable(DurationContainer, value, HideDurationToggle) FontSizeSlider:SetDisabled(value or DurationDB.ScaleByIconSize) DecimalThresholdSlider:SetDisabled(value or not (DurationDB.ShowDecimalSeconds or DurationDB.ShowDecimalsUnderThree)) end)
     DurationContainer:AddChild(HideDurationToggle)
 
     local DurationAnchorFromDropdown = AG:Create("Dropdown")
@@ -3726,12 +3733,29 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     ScaleByIconSizeCheckbox:SetLabel("Scale By Icon Size")
     ScaleByIconSizeCheckbox:SetValue(DurationDB.ScaleByIconSize)
     ScaleByIconSizeCheckbox:SetRelativeWidth(0.5)
-    ScaleByIconSizeCheckbox:SetCallback("OnValueChanged", function(_, _, value) DurationDB.ScaleByIconSize = value FontSizeSlider:SetDisabled(value) UpdateAuras() end)
+    ScaleByIconSizeCheckbox:SetCallback("OnValueChanged", function(_, _, value) DurationDB.ScaleByIconSize = value FontSizeSlider:SetDisabled(value or DurationDB.HideDuration) UpdateAuras() end)
     DurationContainer:AddChild(ScaleByIconSizeCheckbox)
     FontSizeSlider:SetDisabled(DurationDB.ScaleByIconSize)
 
+    DecimalThresholdSlider = AG:Create("Slider")
+    DecimalThresholdSlider:SetLabel("Decimal Seconds Threshold")
+    DecimalThresholdSlider:SetValue(DurationDB.DecimalThreshold or 3)
+    DecimalThresholdSlider:SetSliderValues(0.1, 10, 0.1)
+    DecimalThresholdSlider:SetRelativeWidth(0.5)
+    DecimalThresholdSlider:SetCallback("OnValueChanged", function(_, _, value) DurationDB.DecimalThreshold = value UpdateAuras() end)
+    DecimalThresholdSlider:SetDisabled(not (DurationDB.ShowDecimalSeconds or DurationDB.ShowDecimalsUnderThree))
+
+    local ShowDecimalsCheckbox = AG:Create("CheckBox")
+    ShowDecimalsCheckbox:SetLabel("Show Decimal Seconds")
+    ShowDecimalsCheckbox:SetValue(DurationDB.ShowDecimalSeconds or DurationDB.ShowDecimalsUnderThree or false)
+    ShowDecimalsCheckbox:SetRelativeWidth(0.5)
+    ShowDecimalsCheckbox:SetCallback("OnValueChanged", function(_, _, value) DurationDB.ShowDecimalSeconds = value DecimalThresholdSlider:SetDisabled(DurationDB.HideDuration or not value) UpdateAuras() end)
+    DurationContainer:AddChild(ShowDecimalsCheckbox)
+    DurationContainer:AddChild(DecimalThresholdSlider)
+
 	GUIWidgets.DeepDisable(DurationContainer, DurationDB.HideDuration, HideDurationToggle)
 	FontSizeSlider:SetDisabled(DurationDB.HideDuration or DurationDB.ScaleByIconSize)
+	DecimalThresholdSlider:SetDisabled(DurationDB.HideDuration or not (DurationDB.ShowDecimalSeconds or DurationDB.ShowDecimalsUnderThree))
 	end
 
     containerParent:DoLayout()

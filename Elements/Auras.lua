@@ -1,5 +1,7 @@
 local _, UUF = ...
 
+local AuraDurationFormatter = C_StringUtil.CreateNumericRuleFormatter()
+local AuraDurationNoDecimalsFormatter = C_StringUtil.CreateNumericRuleFormatter()
 local AuraContainerState = setmetatable({}, {__mode = "k"})
 local AuraUnitFrames = setmetatable({}, {__mode = "k"})
 local AuraEligibilityEventFrame = CreateFrame("Frame")
@@ -47,6 +49,44 @@ local function GetAuraDurationDB(unitFrame, unit, AuraDB)
 	return CooldownTextDB
 end
 
+local function GetAuraDurationFormatter(DurationDB)
+	local decimalThreshold = 0
+	if DurationDB then
+		if DurationDB.ShowDecimalSeconds then
+			decimalThreshold = DurationDB.DecimalThreshold or 3
+		elseif DurationDB.ShowDecimalsUnderThree then
+			decimalThreshold = 3
+		end
+	end
+	local formatter = decimalThreshold > 0 and AuraDurationFormatter or AuraDurationNoDecimalsFormatter
+	local breakpoints = {}
+	for _, breakpoint in ipairs(UUF.db.profile.General.CooldownText.CooldownBreakpoints) do
+		if decimalThreshold > 0 or breakpoint.displayStyle ~= "decimalSeconds" then
+			local breakpointCopy = {}
+			for key, value in pairs(breakpoint) do breakpointCopy[key] = value end
+			if breakpointCopy.displayStyle == "decimalSeconds" then
+				breakpointCopy.threshold = 0
+			elseif breakpointCopy.displayStyle == "secondsOnly" then
+				breakpointCopy.threshold = decimalThreshold > 0 and decimalThreshold or 0
+				breakpointCopy.min = 1
+			end
+			breakpoints[#breakpoints + 1] = breakpointCopy
+		end
+	end
+	formatter:SetBreakpoints(breakpoints)
+	return formatter
+end
+
+local function ApplyAuraDurationText(button, DurationDB)
+	if button.SetDurationText and button.Time then
+		button:SetDurationText(button.Time, {
+			formatter = GetAuraDurationFormatter(DurationDB),
+			expiredText = "",
+			zeroDurationText = "",
+		})
+	end
+end
+
 local function CreateAuraButtonBorder(button)
 	local top = button:CreateTexture(nil, "OVERLAY", nil, 7)
 	top:SetColorTexture(0, 0, 0, 1)
@@ -86,6 +126,7 @@ local function ApplyAuraButtonStyle(button, unitFrame, unit, auraKey, size)
 	local fontSize = CooldownTextDB.FontSize
 	if CooldownTextDB.ScaleByIconSize then fontSize = math.max(CooldownTextDB.FontSize * size / 36, 1) end
 	ApplyFontStyle(button.Time, button, CooldownTextDB.Layout, fontSize, CooldownTextDB.Colour)
+	ApplyAuraDurationText(button, CooldownTextDB)
 	button.Time:SetShown(not CooldownTextDB.HideDuration)
 
 	button.Border:ClearAllPoints()
@@ -153,7 +194,7 @@ local function GetAuraFilters(AuraDB, auraType)
 	return filters, playerTokens, otherTokens, showAllPlayer, showAllOthers
 end
 
-local function CreateAuraContainer(unitFrame, unit, auraKey, durationFormatter)
+local function CreateAuraContainer(unitFrame, unit, auraKey)
 	local AuraDB = GetAuraDB(unitFrame, unit, auraKey)
 	local container = unitFrame:CreateAuras({
 		maxWidth = AuraDB and math.max((AuraDB.Size + AuraDB.Layout[5]) * AuraDB.Wrap - AuraDB.Layout[5], 1) or 1,
@@ -171,7 +212,7 @@ local function CreateAuraContainer(unitFrame, unit, auraKey, durationFormatter)
 	container.showBuffBorder = true
 	container.showDebuffBorder = true
 	container.borderStyle = AuraButtonBorderStyle.Color
-	container.durationFormatter = durationFormatter
+	container.durationFormatter = GetAuraDurationFormatter(AuraDB and GetAuraDurationDB(unitFrame, unit, AuraDB))
 	container.PostCreateButton = PostCreateAuraButton
 	return container
 end
@@ -190,6 +231,7 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	local candidateFilters = hasSpellIDs and {includeSpellIDs = AuraDB.SpellIDs} or nil
 	state.Size = AuraDB.Size
 	container.size = AuraDB.Size
+	container.durationFormatter = GetAuraDurationFormatter(GetAuraDurationDB(unitFrame, unit, AuraDB))
 	for _, button in ipairs(state.Buttons) do ApplyAuraButtonStyle(button, unitFrame, unit, auraKey, state.Size) end
 	local filters, playerTokens, otherTokens, showAllPlayer, showAllOthers = GetAuraFilters(AuraDB, auraType)
 	local hasAuraFilters = #filters > 0
@@ -318,9 +360,8 @@ function UUF:CreateUnitAuras(unitFrame, unit)
 	if not AurasDB then return end
 	unitFrame.AuraContainers = {}
 	unitFrame.AuraContainerPool = {}
-	local durationFormatter = UUF:GetCooldownDurationFormatter()
 	for _ = 1, UUF.MAX_AURA_CONTAINERS do
-		local container = CreateAuraContainer(unitFrame, unit, nil, durationFormatter)
+		local container = CreateAuraContainer(unitFrame, unit, nil)
 		if container then unitFrame.AuraContainerPool[#unitFrame.AuraContainerPool + 1] = container end
 	end
 	AuraUnitFrames[unitFrame] = unit
@@ -332,7 +373,6 @@ function UUF:UpdateUnitAuras(unitFrame, unit)
 	local AurasDB = UUF:GetUnitDB(unitFrame, unit).Auras
 	if not AurasDB then return end
 	AuraUnitFrames[unitFrame] = unit
-	UUF:GetCooldownDurationFormatter()
 	SyncAuraContainers(unitFrame, unit)
 	UUF:UpdateUnitAuraEligibility(unitFrame, unit)
 	if UUF.AURA_TEST_MODE then UUF:CreateTestAuras(unitFrame, unit) end
