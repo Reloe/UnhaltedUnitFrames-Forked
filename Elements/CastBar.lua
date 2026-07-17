@@ -5,8 +5,8 @@ local function SetCastBarColour(castBar, unit, CastBarDB)
 	if CastBarDB.ColourByClass then
 		local unitForClass = unit == "pet" and "player" or unit
 		local unitClass = select(2, UnitClass(unitForClass))
-		local unitColor = RAID_CLASS_COLORS[unitClass]
-		if unitColor then r, g, b, a = unitColor.r, unitColor.g, unitColor.b, CastBarDB.ForegroundOpacity end
+		local classR, classG, classB = UUF:GetConfiguredClassColour(unitClass)
+		if classR then r, g, b, a = classR, classG, classB, CastBarDB.ForegroundOpacity end
 	end
 	if not r then r, g, b, a = unpack(CastBarDB.Foreground) end
 	if UUF.IsInterruptOnCooldown and C_CurveUtil.EvaluateColorValueFromBoolean and (castBar.casting or castBar.channeling or castBar.empowering) and castBar.notInterruptible ~= nil and UnitCanAttack("player", unit) and UUF:IsInterruptOnCooldown() then

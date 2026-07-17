@@ -358,6 +358,14 @@ function UUF:LoadCustomColours()
         oUF.colors.reaction[reaction] = oUF:CreateColor(color[1], color[2], color[3])
     end
 
+    for classToken, defaultColor in pairs(RAID_CLASS_COLORS or {}) do
+        local color = General.Colours.Class and General.Colours.Class[classToken]
+        local r = color and color[1] or defaultColor.r
+        local g = color and color[2] or defaultColor.g
+        local b = color and color[3] or defaultColor.b
+        oUF.colors.class[classToken] = oUF:CreateColor(r, g, b)
+    end
+
     local DefaultStatusColours = UUF:GetDefaultDB().profile.General.Colours.Status
     local StatusColours = General.Colours.Status or DefaultStatusColours
     local tappedColor = StatusColours.Tapped or DefaultStatusColours.Tapped
@@ -394,6 +402,18 @@ function UUF:LoadCustomColours()
         if obj.UpdateTags then
             obj:UpdateTags()
         end
+    end
+end
+
+function UUF:GetConfiguredClassColour(classToken)
+    if not classToken then return end
+    local color = UUF.db.profile.General.Colours.Class and UUF.db.profile.General.Colours.Class[classToken]
+    if color then
+        return color[1], color[2], color[3]
+    end
+    local defaultColor = RAID_CLASS_COLORS and RAID_CLASS_COLORS[classToken]
+    if defaultColor then
+        return defaultColor.r, defaultColor.g, defaultColor.b
     end
 end
 
@@ -443,8 +463,8 @@ end
 function UUF:GetUnitColour(unit)
     if UnitIsPlayer(unit) or UnitInPartyIsAI(unit) then
         local _, class = UnitClass(unit)
-        local classColour = class and RAID_CLASS_COLORS[class]
-        if classColour then return classColour.r, classColour.g, classColour.b end
+        local r, g, b = UUF:GetConfiguredClassColour(class)
+        if r then return r, g, b end
     end
     local reaction = UnitReaction(unit, "player")
     if reaction and UUF.db.profile.General.Colours.Reaction[reaction] then
@@ -456,10 +476,8 @@ end
 
 function UUF:GetClassColour(unitFrame)
     local _, class = UnitClass(unitFrame.unit)
-    local classColour = RAID_CLASS_COLORS[class]
-    if classColour then
-        return {classColour.r, classColour.g, classColour.b, 1}
-    end
+    local r, g, b = UUF:GetConfiguredClassColour(class)
+    if r then return {r, g, b, 1} end
 end
 
 function UUF:GetReactionColour(reaction)

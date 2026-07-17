@@ -67,8 +67,8 @@ local TestSummonAtlas = {
 local function GetTestUnitColour(id, defaultColour, colourByClass, opacity)
 	if colourByClass then
 		local temporaryClass = TestData[id].class
-		local classColour = RAID_CLASS_COLORS[temporaryClass]
-		return classColour.r, classColour.g, classColour.b, opacity
+		local r, g, b = UUF:GetConfiguredClassColour(temporaryClass)
+		return r, g, b, opacity
 	else
 		return defaultColour[1], defaultColour[2], defaultColour[3], opacity
 	end

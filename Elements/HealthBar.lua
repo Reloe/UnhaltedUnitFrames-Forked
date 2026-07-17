@@ -61,8 +61,8 @@ function UUF:CreateUnitHealthBar(unitFrame, unit)
 			if colour and colour ~= oUF.colors.health then return end
 			local currentHealthBarDB = UUF:GetUnitDB(unitFrame, unit).HealthBar
 			if unit == "pet" and currentHealthBarDB.ColourByClass then
-				local unitColour = RAID_CLASS_COLORS[select(2, UnitClass("player"))]
-				if unitColour then healthBar:SetStatusBarColor(unitColour.r, unitColour.g, unitColour.b, currentHealthBarDB.ForegroundOpacity) return end
+				local r, g, b = UUF:GetConfiguredClassColour(select(2, UnitClass("player")))
+				if r then healthBar:SetStatusBarColor(r, g, b, currentHealthBarDB.ForegroundOpacity) return end
 			end
 			healthBar:SetStatusBarColor(currentHealthBarDB.Foreground[1], currentHealthBarDB.Foreground[2], currentHealthBarDB.Foreground[3], currentHealthBarDB.ForegroundOpacity)
 		end

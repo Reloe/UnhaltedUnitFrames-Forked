@@ -1,5 +1,13 @@
 local _, UUF = ...
 
+local function GetDefaultClassColours()
+    local classColours = {}
+    for classToken, color in pairs(RAID_CLASS_COLORS or {}) do
+        classColours[classToken] = {color.r, color.g, color.b}
+    end
+    return classColours
+end
+
 local Defaults = {
     global = {
         UseGlobalProfile = false,
@@ -98,7 +106,8 @@ local Defaults = {
                     [1] = {1, 1, 0.47},
                     [2] = {1, 0.6, 0},
                     [3] = {1, 0, 0},
-                }
+                },
+                Class = GetDefaultClassColours(),
             }
         },
         Units = {

@@ -88,6 +88,7 @@ local AnchorPoints = { { ["TOPLEFT"] = "Top Left", ["TOP"] = "Top", ["TOPRIGHT"]
 local AuraAnchorParents = {{Frame = "Unit Frame", Health = "Health Bar"}, {"Frame", "Health"}}
 local FrameStrataList = {{ ["BACKGROUND"] = "Background", ["LOW"] = "Low", ["MEDIUM"] = "Medium", ["HIGH"] = "High", ["DIALOG"] = "Dialog", ["FULLSCREEN"] = "Fullscreen", ["FULLSCREEN_DIALOG"] = "Fullscreen Dialog", ["TOOLTIP"] = "Tooltip" }, { "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" }}
 local TopBottomList = {{ ["TOP"] = "Top", ["BOTTOM"] = "Bottom" }, { "TOP", "BOTTOM" }}
+local ClassOrder = {"WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "DEATHKNIGHT", "SHAMAN", "MAGE", "WARLOCK", "MONK", "DRUID", "DEMONHUNTER", "EVOKER"}
 local RaidGrowthDirectionList = {
     {
         ["RIGHT_DOWN"] = "Right to Left, then Down",
@@ -578,6 +579,10 @@ end
 
 local function CreateColourSettings(containerParent)
     local Container = GUIWidgets.CreateInlineGroup(containerParent, "Colours")
+    UUF.db.profile.General.Colours.Class = UUF.db.profile.General.Colours.Class or {}
+    for classToken, color in pairs(UUF:GetDefaultDB().profile.General.Colours.Class) do
+        UUF.db.profile.General.Colours.Class[classToken] = UUF.db.profile.General.Colours.Class[classToken] or {color[1], color[2], color[3]}
+    end
     UUF.db.profile.General.Colours.Status = UUF.db.profile.General.Colours.Status or {}
     for statusType, color in pairs(UUF:GetDefaultDB().profile.General.Colours.Status) do
         UUF.db.profile.General.Colours.Status[statusType] = UUF.db.profile.General.Colours.Status[statusType] or {color[1], color[2], color[3]}
@@ -631,6 +636,12 @@ local function CreateColourSettings(containerParent)
     ResetThreatColoursButton:SetRelativeWidth(0.33)
     Container:AddChild(ResetThreatColoursButton)
 
+    local ResetClassColoursButton = AG:Create("Button")
+    ResetClassColoursButton:SetText("Class Colours")
+    ResetClassColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Class, UUF.db.profile.General.Colours.Class) UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
+    ResetClassColoursButton:SetRelativeWidth(0.33)
+    Container:AddChild(ResetClassColoursButton)
+
     GUIWidgets.CreateHeader(Container, "Power")
 
     local PowerOrder = {0, 1, 2, 3, 6, 8, 11, 13, 17, 18}
@@ -678,6 +689,19 @@ local function CreateColourSettings(containerParent)
         ReactionColourPicker:SetHasAlpha(false)
         ReactionColourPicker:SetRelativeWidth(0.25)
         Container:AddChild(ReactionColourPicker)
+    end
+
+    GUIWidgets.CreateHeader(Container, "Class")
+
+    for _, classToken in ipairs(ClassOrder) do
+        local ClassColourPicker = AG:Create("ColorPicker")
+        ClassColourPicker:SetLabel(LOCALIZED_CLASS_NAMES_MALE[classToken] or classToken)
+        local R, G, B = unpack(UUF.db.profile.General.Colours.Class[classToken])
+        ClassColourPicker:SetColor(R, G, B)
+        ClassColourPicker:SetCallback("OnValueChanged", function(_, _, r, g, b) UUF.db.profile.General.Colours.Class[classToken] = {r, g, b} UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() end)
+        ClassColourPicker:SetHasAlpha(false)
+        ClassColourPicker:SetRelativeWidth(0.25)
+        Container:AddChild(ClassColourPicker)
     end
 
     GUIWidgets.CreateHeader(Container, "Status")
