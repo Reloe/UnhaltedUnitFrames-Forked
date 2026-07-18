@@ -4468,7 +4468,8 @@ local function CreateUnitSettings(containerParent, unit)
 		if UnitTab == "Auras" then containerParent:SetScroll(0) end
         SubContainer:ReleaseChildren()
         if UnitTab == "Frame" then
-            CreateFrameSettings(SubContainer, unit, false, function(element) UpdateUnitSettings(unit, function() UUF:UpdateUnitFrame(UUF[unit:upper()], unit) end, element) end)
+            local canAnchorToFrame = unit ~= "party" and unit ~= "raid" and unit ~= "augmentation" and unit ~= "boss"
+            CreateFrameSettings(SubContainer, unit, canAnchorToFrame, function(element) UpdateUnitSettings(unit, function() UUF:UpdateUnitFrame(UUF[unit:upper()], unit) end, element) end)
 		elseif UnitTab == "Players" and unit == "augmentation" then
 			CreateAugmentationFrameSettings(SubContainer)
         elseif UnitTab == "HealPrediction" then

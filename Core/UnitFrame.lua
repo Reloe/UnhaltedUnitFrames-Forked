@@ -149,13 +149,7 @@ function UUF:SpawnUnitFrame(unit)
         UUF[unit:upper()]:SetFrameStrata(FrameDB.FrameStrata)
     end
 
-    if unit == "player" or unit == "target" then
-        UUF[unit:upper()]:SetPoint(FrameDB.Layout[1], UIParent, FrameDB.Layout[2], FrameDB.Layout[3], FrameDB.Layout[4])
-        UUF[unit:upper()]:SetSize(FrameDB.Width, FrameDB.Height)
-    elseif unit == "targettarget" or unit == "focus" or unit == "focustarget" or unit == "pet" then
-        UUF[unit:upper()]:SetPoint(FrameDB.Layout[1], UIParent, FrameDB.Layout[2], FrameDB.Layout[3], FrameDB.Layout[4])
-        UUF[unit:upper()]:SetSize(FrameDB.Width, FrameDB.Height)
-    end
+    if unit == "player" or unit == "target" or unit == "targettarget" or unit == "focus" or unit == "focustarget" or unit == "pet" then UUF:PositionUnitFrame(UUF[unit:upper()], unit) end
     if unit ~= "player" and unit ~= "boss" and unit ~= "party" and unit ~= "raid" then UUF:RegisterRangeFrame(UUF:FetchFrameName(unit), unit) end
 	UUF:CreateMover(unit)
 

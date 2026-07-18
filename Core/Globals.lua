@@ -560,6 +560,24 @@ function UUF:GetUnitDB(unitFrame, unit, units)
 	return normalizedUnit == "augmentation" and units.raid.augmentation or units[normalizedUnit]
 end
 
+function UUF:GetFrameAnchorParent(unitFrame, unit)
+	local UnitDB = UUF:GetUnitDB(unitFrame, unit)
+	local FrameDB = UnitDB and UnitDB.Frame
+	local anchorParentName = FrameDB and FrameDB.AnchorParent
+	if not anchorParentName or anchorParentName == "" then return UIParent end
+	local anchorParent = _G[anchorParentName] or _G[UUF.SCMAnchors and UUF.SCMAnchors[anchorParentName] or ""]
+	if not anchorParent or anchorParent == unitFrame then return UIParent end
+	return anchorParent
+end
+
+function UUF:PositionUnitFrame(unitFrame, unit)
+	if not unitFrame then return end
+	local FrameDB = UUF:GetUnitDB(unitFrame, unit).Frame
+	unitFrame:ClearAllPoints()
+	unitFrame:SetPoint(FrameDB.Layout[1], UUF:GetFrameAnchorParent(unitFrame, unit), FrameDB.Layout[2], FrameDB.Layout[3], FrameDB.Layout[4])
+	unitFrame:SetSize(FrameDB.Width, FrameDB.Height)
+end
+
 function UUF:ForEachUnitDB(callback)
 	for unit, unitDB in pairs(UUF.db.profile.Units) do callback(unitDB, unit) end
 	callback(UUF.db.profile.Units.raid.augmentation, "augmentation")

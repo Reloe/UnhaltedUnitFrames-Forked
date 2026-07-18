@@ -104,16 +104,8 @@ function UUF:UpdateUnitHealthBar(unitFrame, unit)
     local HealthBarDB = UUF:GetUnitDB(unitFrame, unit).HealthBar
     local DispelHighlightDB = UUF:GetUnitDB(unitFrame, unit).HealthBar.DispelHighlight
 
-    if unitFrame then
-        unitFrame:ClearAllPoints()
-        unitFrame:SetSize(FrameDB.Width, FrameDB.Height)
-        if unit == "player" or unit == "target" then
-            UUF[unit:upper()]:SetPoint(FrameDB.Layout[1], UIParent, FrameDB.Layout[2], FrameDB.Layout[3], FrameDB.Layout[4])
-            UUF[unit:upper()]:SetSize(FrameDB.Width, FrameDB.Height)
-        elseif unit == "targettarget" or unit == "focus" or unit == "focustarget" or unit == "pet" then
-            UUF[unit:upper()]:SetPoint(FrameDB.Layout[1], UIParent, FrameDB.Layout[2], FrameDB.Layout[3], FrameDB.Layout[4])
-            UUF[unit:upper()]:SetSize(FrameDB.Width, FrameDB.Height)
-        end
+    if unitFrame and (unit == "player" or unit == "target" or unit == "targettarget" or unit == "focus" or unit == "focustarget" or unit == "pet") then
+        UUF:PositionUnitFrame(unitFrame, unit)
     end
 
     if unitFrame.Health then
