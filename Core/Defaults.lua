@@ -784,7 +784,7 @@ local Defaults = {
                     Width = 180,
                     Height = 28,
                     AnchorParent = "UIParent",
-                    Layout = {"LEFT", "LEFT", 100, 0},
+                    Layout = {"LEFT", "LEFT", 200, 200},
                     FrameStrata = "LOW",
                 },
                 HealthBar = {
