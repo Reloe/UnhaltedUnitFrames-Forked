@@ -3,7 +3,7 @@ local _, UUF = ...
 UUF.AFKDNDIndicatorFrames = UUF.AFKDNDIndicatorFrames or {}
 
 local AFKDND_DEFAULTS = {
-	Enabled = true,
+	Enabled = false,
 	FontSize = 12,
 	Layout = {"CENTER", "CENTER", 0, 0},
 	Colour = {1, 1, 1, 1},
@@ -55,6 +55,7 @@ function UUF:UnregisterAFKDNDIndicatorFrame(unitFrame)
 end
 
 function UUF:CreateUnitAFKDNDIndicator(unitFrame, unit)
+	if unit == "pet" then return end
 	local IndicatorDB = UUF:GetAFKDNDIndicatorDB(unitFrame, unit)
 	local FontsDB = UUF:GetFontSettings(unitFrame, unit)
 	local FontMedia = UUF:GetFontMedia(unitFrame, unit)
@@ -76,6 +77,11 @@ function UUF:CreateUnitAFKDNDIndicator(unitFrame, unit)
 end
 
 function UUF:UpdateUnitAFKDNDIndicator(unitFrame, unit)
+	if unit == "pet" then
+		UUF:UnregisterAFKDNDIndicatorFrame(unitFrame)
+		if unitFrame then unitFrame.AFKDNDIndicator = nil end
+		return
+	end
 	local IndicatorDB = UUF:GetAFKDNDIndicatorDB(unitFrame, unit)
 	if IndicatorDB.Enabled then
 		unitFrame.AFKDNDIndicator = unitFrame.AFKDNDIndicator or UUF:CreateUnitAFKDNDIndicator(unitFrame, unit)

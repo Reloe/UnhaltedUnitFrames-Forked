@@ -3360,7 +3360,7 @@ local function CreateIndicatorSettings(containerParent, unit)
         elseif IndicatorTab == "Combat" then
             CreateStatusSettings(IndicatorContainer, unit, "Combat", function() UUF:UpdateUnitCombatIndicator(UUF[unit:upper()], unit) end)
 		elseif IndicatorTab == "AFKDND" then
-			CreateAFKDNDIndicatorSettings(IndicatorContainer, unit, function() UpdateUnitSettings(unit, nil, "Indicators") end)
+			CreateAFKDNDIndicatorSettings(IndicatorContainer, unit, function() UpdateUnitSettings(unit, function() UUF:UpdateUnitAFKDNDIndicator(UUF[unit:upper()], unit) end, "Indicators") end)
         elseif IndicatorTab == "PvP" and unit == "player" then
             CreatePvPIndicatorSettings(IndicatorContainer, function() UUF:UpdateUnitPvPIndicator(UUF.PLAYER, "player") end)
         elseif IndicatorTab == "Mouseover" then
@@ -3419,10 +3419,17 @@ local function CreateIndicatorSettings(containerParent, unit)
 			{ text = "Resurrect", value = "ResurrectIndicator" },
 			{ text = "Summon", value = "Summon" },
         })
-    elseif unit == "focus" or unit == "pet" then
+    elseif unit == "focus" then
         IndicatorContainerTabGroup:SetTabs({
             { text = "Raid Target Marker", value = "RaidTargetMarker" },
             { text = "AFK / DND", value = "AFKDND" },
+            { text = "Mouseover", value = "Mouseover" },
+            { text = "Target Indicator", value = "TargetIndicator" },
+            { text = "Threat Indicator", value = "ThreatIndicator" },
+        })
+    elseif unit == "pet" then
+        IndicatorContainerTabGroup:SetTabs({
+            { text = "Raid Target Marker", value = "RaidTargetMarker" },
             { text = "Mouseover", value = "Mouseover" },
             { text = "Target Indicator", value = "TargetIndicator" },
             { text = "Threat Indicator", value = "ThreatIndicator" },
@@ -3436,7 +3443,9 @@ local function CreateIndicatorSettings(containerParent, unit)
         })
     end
     IndicatorContainerTabGroup:SetCallback("OnGroupSelected", SelectIndicatorTab)
-    IndicatorContainerTabGroup:SelectTab(GetSavedSubTab(unit, "Indicators", "RaidTargetMarker"))
+    local savedIndicatorTab = GetSavedSubTab(unit, "Indicators", "RaidTargetMarker")
+    if unit == "pet" and savedIndicatorTab == "AFKDND" then savedIndicatorTab = "RaidTargetMarker" end
+    IndicatorContainerTabGroup:SelectTab(savedIndicatorTab)
     containerParent:AddChild(IndicatorContainerTabGroup)
 end
 
