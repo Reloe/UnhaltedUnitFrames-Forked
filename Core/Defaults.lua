@@ -130,7 +130,7 @@ local Defaults = {
                 Frame = {
                     Width = 272,
                     Height = 42,
-                    Layout = {"RIGHT", "LEFT", -20, 0},
+                    Layout = {"CENTER", "CENTER", -300, 0},
                     FrameStrata = "LOW",
                 },
                 HealthBar = {
@@ -257,7 +257,7 @@ local Defaults = {
                 },
                 Indicators = {
                     AFKDND = {
-                        Enabled = true,
+                        Enabled = false,
                         FontSize = 12,
                         Layout = {"CENTER", "CENTER", 0, 0},
                         Colour = {1, 1, 1, 1},
@@ -381,7 +381,7 @@ local Defaults = {
                 Frame = {
                     Width = 272,
                     Height = 42,
-                    Layout = {"LEFT", "RIGHT", 20, 0},
+                    Layout = {"CENTER", "CENTER", 300, 0},
                     FrameStrata = "LOW",
                 },
                 HealthBar = {
@@ -489,7 +489,7 @@ local Defaults = {
                 },
                 Indicators = {
                     AFKDND = {
-                        Enabled = true,
+                        Enabled = false,
                         FontSize = 12,
                         Layout = {"CENTER", "CENTER", 0, 0},
                         Colour = {1, 1, 1, 1},
@@ -619,7 +619,7 @@ local Defaults = {
                     Width = 122,
                     Height = 22,
                     AnchorParent = "UUF_Target",
-                    Layout = {"TOPRIGHT", "BOTTOMRIGHT", 0, -26.1},
+                    Layout = {"CENTER", "CENTER", 0, -50},
                     FrameStrata = "LOW",
                 },
                 HealthBar = {
@@ -685,7 +685,7 @@ local Defaults = {
                 },
                 Indicators = {
                     AFKDND = {
-                        Enabled = true,
+                        Enabled = false,
                         FontSize = 12,
                         Layout = {"CENTER", "CENTER", 0, 0},
                         Colour = {1, 1, 1, 1},
@@ -784,7 +784,7 @@ local Defaults = {
                     Width = 180,
                     Height = 28,
                     AnchorParent = "UUF_Player",
-                    Layout = {"BOTTOM", "TOPLEFT", 0, 110.1},
+                    Layout = {"LEFT", "LEFT", 100, 0},
                     FrameStrata = "LOW",
                 },
                 HealthBar = {
@@ -891,7 +891,7 @@ local Defaults = {
                 },
                 Indicators = {
                     AFKDND = {
-                        Enabled = true,
+                        Enabled = false,
                         FontSize = 12,
                         Layout = {"CENTER", "CENTER", 0, 0},
                         Colour = {1, 1, 1, 1},
@@ -993,7 +993,7 @@ local Defaults = {
                     Width = 122,
                     Height = 22,
                     AnchorParent = "UUF_Focus",
-                    Layout = {"LEFT", "RIGHT", 1, 0},
+                    Layout = {"LEFT", "LEFT", 100, -50},
                     FrameStrata = "LOW",
                 },
                 HealthBar = {
@@ -1059,7 +1059,7 @@ local Defaults = {
                 },
                 Indicators = {
                     AFKDND = {
-                        Enabled = true,
+                        Enabled = false,
                         FontSize = 12,
                         Layout = {"CENTER", "CENTER", 0, 0},
                         Colour = {1, 1, 1, 1},
@@ -1260,7 +1260,7 @@ local Defaults = {
                 },
                 Indicators = {
                     AFKDND = {
-                        Enabled = true,
+                        Enabled = false,
                         FontSize = 12,
                         Layout = {"CENTER", "CENTER", 0, 0},
                         Colour = {1, 1, 1, 1},
@@ -1361,7 +1361,7 @@ local Defaults = {
                 Frame = {
                     Width = 252,
                     Height = 52,
-                    Layout = {"CENTER", "CENTER", 550.1, -0.1, 26},
+                    Layout = {"CENTER", "CENTER", 550.1, 200, 26},
                     GrowthDirection = "DOWN",
                     FrameStrata = "LOW",
                 },
@@ -1464,7 +1464,7 @@ local Defaults = {
                 },
                 Indicators = {
                     AFKDND = {
-                        Enabled = true,
+                        Enabled = false,
                         FontSize = 12,
                         Layout = {"CENTER", "CENTER", 0, 0},
                         Colour = {1, 1, 1, 1},
@@ -1630,7 +1630,7 @@ local Defaults = {
                 },
                 Indicators = {
                     AFKDND = {
-                        Enabled = true,
+                        Enabled = false,
                         FontSize = 12,
                         Layout = {"CENTER", "CENTER", 0, 0},
                         Colour = {1, 1, 1, 1},
@@ -1834,7 +1834,7 @@ local Defaults = {
                 },
                 Indicators = {
                     AFKDND = {
-                        Enabled = true,
+                        Enabled = false,
                         FontSize = 12,
                         Layout = {"CENTER", "CENTER", 0, 0},
                         Colour = {1, 1, 1, 1},
@@ -2036,7 +2036,7 @@ local Defaults = {
 					},
 					Indicators = {
 						AFKDND = {
-							Enabled = true,
+							Enabled = false,
 							FontSize = 12,
 							Layout = {"CENTER", "CENTER", 0, 0},
 							Colour = {1, 1, 1, 1},
