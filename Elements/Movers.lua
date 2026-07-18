@@ -1,5 +1,32 @@
 local _, UUF = ...
 
+local function GetAnchorCoordinates(frame, anchorPoint)
+	if not frame then return end
+
+	local left, right, top, bottom = frame:GetLeft(), frame:GetRight(), frame:GetTop(), frame:GetBottom()
+	if not left or not right or not top or not bottom then return end
+
+	local x
+	if anchorPoint == "TOPRIGHT" or anchorPoint == "RIGHT" or anchorPoint == "BOTTOMRIGHT" then
+		x = right
+	elseif anchorPoint == "TOP" or anchorPoint == "CENTER" or anchorPoint == "BOTTOM" then
+		x = (left + right) / 2
+	else
+		x = left
+	end
+
+	local y
+	if anchorPoint == "TOPLEFT" or anchorPoint == "TOP" or anchorPoint == "TOPRIGHT" then
+		y = top
+	elseif anchorPoint == "LEFT" or anchorPoint == "CENTER" or anchorPoint == "RIGHT" then
+		y = (top + bottom) / 2
+	else
+		y = bottom
+	end
+
+	return x, y
+end
+
 local function RefreshMover(frameMover)
 	local unitFrame = frameMover.unit == "boss" and UUF.BOSS1 or frameMover.unit == "party" and UUF.PARTY_CONTAINER or frameMover.unit == "raid" and UUF.RAID_CONTAINER or frameMover.unit == "augmentation" and UUF.AUGMENTATION_RAID_CONTAINER or UUF[frameMover.unit:upper()]
 	if not unitFrame then return end
@@ -29,8 +56,17 @@ local function StopMoving(frameMover)
 
 	local moverX, moverY = frameMover:GetCenter()
 	local FrameDB = UUF.db.profile.Units[frameMover.unit].Frame
-	FrameDB.Layout[3] = FrameDB.Layout[3] + moverX - frameMover.startX
-	FrameDB.Layout[4] = FrameDB.Layout[4] + moverY - frameMover.startY
+	local anchorParent = UUF.GetFrameAnchorParent and UUF:GetFrameAnchorParent(unitFrame, frameMover.unit) or UIParent
+	local frameX, frameY = GetAnchorCoordinates(frameMover, FrameDB.Layout[1])
+	local parentX, parentY = GetAnchorCoordinates(anchorParent, FrameDB.Layout[2])
+
+	if frameX and frameY and parentX and parentY then
+		FrameDB.Layout[3] = frameX - parentX
+		FrameDB.Layout[4] = frameY - parentY
+	else
+		FrameDB.Layout[3] = FrameDB.Layout[3] + moverX - frameMover.startX
+		FrameDB.Layout[4] = FrameDB.Layout[4] + moverY - frameMover.startY
+	end
 
 	if frameMover.unit == "boss" then UUF:LayoutBossFrames() elseif frameMover.unit == "augmentation" then UUF:LayoutAugmentationRaidFrames() elseif frameMover.unit == "party" or frameMover.unit == "raid" then UUF:LayoutGroupFrames(frameMover.unit) else UUF:UpdateUnitFrame(unitFrame, frameMover.unit) end
 	RefreshMover(frameMover)
