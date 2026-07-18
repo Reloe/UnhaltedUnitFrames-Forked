@@ -613,13 +613,13 @@ local Defaults = {
                 }
             },
             targettarget = {
-                Enabled = false,
+                Enabled = true,
                 ForceHideBlizzard = true,
                 Frame = {
                     Width = 122,
                     Height = 22,
                     AnchorParent = "UUF_Target",
-                    Layout = {"CENTER", "CENTER", 0, -50},
+                    Layout = {"TOP", "BOTTOM", 0, 0},
                     FrameStrata = "LOW",
                 },
                 HealthBar = {
@@ -783,7 +783,7 @@ local Defaults = {
                 Frame = {
                     Width = 180,
                     Height = 28,
-                    AnchorParent = "UUF_Player",
+                    AnchorParent = "UIParent",
                     Layout = {"LEFT", "LEFT", 100, 0},
                     FrameStrata = "LOW",
                 },
@@ -993,7 +993,7 @@ local Defaults = {
                     Width = 122,
                     Height = 22,
                     AnchorParent = "UUF_Focus",
-                    Layout = {"LEFT", "LEFT", 100, -50},
+                    Layout = {"TOP", "BOTTOM", 0, 0},
                     FrameStrata = "LOW",
                 },
                 HealthBar = {
@@ -1156,7 +1156,7 @@ local Defaults = {
                 ForceHideBlizzard = true,
                 Frame = {
                     Width = 265,
-                    Height = 3,
+                    Height = 30,
                     AnchorParent = "UUF_Player",
                     Layout = {"TOPLEFT", "BOTTOMLEFT", 0, -1},
                     FrameStrata = "LOW",
