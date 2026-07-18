@@ -265,7 +265,11 @@ local function ApplyTestGroupFrame(unitFrame, unit, index, displayName, element)
 		if IndicatorDB.Target.Style == "Border" then
 			if unitFrame.TargetIndicator ~= unitFrame.Container then unitFrame.TargetIndicator:SetAlpha(0) end
 			unitFrame.TargetIndicator = unitFrame.Container
-			unitFrame.Container:SetBackdropBorderColor(IndicatorDB.Target.Enabled and index == 1 and IndicatorDB.Target.Colour[1] or 0, IndicatorDB.Target.Enabled and index == 1 and IndicatorDB.Target.Colour[2] or 0, IndicatorDB.Target.Enabled and index == 1 and IndicatorDB.Target.Colour[3] or 0, IndicatorDB.Target.Enabled and index == 1 and (IndicatorDB.Target.Colour[4] or 1) or 1)
+			if IndicatorDB.Target.Enabled and index == 1 then
+				unitFrame.Container:SetBackdropBorderColor(IndicatorDB.Target.Colour[1], IndicatorDB.Target.Colour[2], IndicatorDB.Target.Colour[3], IndicatorDB.Target.Colour[4] or 1)
+			else
+				unitFrame.Container:SetBackdropBorderColor(0, 0, 0, 1)
+			end
 		else
 			if not unitFrame.TargetIndicatorFrame then
 				unitFrame.TargetIndicatorFrame = CreateFrame("Frame", UUF:FetchFrameName(unit).."_TargetIndicator", unitFrame.Container, "BackdropTemplate")
@@ -557,7 +561,11 @@ local function UpdateBossTestEnvironment(element)
 				if TargetIndicatorDB.Style == "Border" then
 					if BossFrame.TargetIndicator ~= BossFrame.Container then BossFrame.TargetIndicator:SetAlpha(0) BossFrame.TargetIndicator:Hide() end
 					BossFrame.TargetIndicator = BossFrame.Container
-					BossFrame.Container:SetBackdropBorderColor(TargetIndicatorDB.Enabled and i % 2 == 1 and TargetIndicatorDB.Colour[1] or 0, TargetIndicatorDB.Enabled and i % 2 == 1 and TargetIndicatorDB.Colour[2] or 0, TargetIndicatorDB.Enabled and i % 2 == 1 and TargetIndicatorDB.Colour[3] or 0, TargetIndicatorDB.Enabled and i % 2 == 1 and (TargetIndicatorDB.Colour[4] or 1) or 1)
+					if TargetIndicatorDB.Enabled and i % 2 == 1 then
+						BossFrame.Container:SetBackdropBorderColor(TargetIndicatorDB.Colour[1], TargetIndicatorDB.Colour[2], TargetIndicatorDB.Colour[3], TargetIndicatorDB.Colour[4] or 1)
+					else
+						BossFrame.Container:SetBackdropBorderColor(0, 0, 0, 1)
+					end
 				else
 					if not BossFrame.TargetIndicatorFrame then
 						BossFrame.TargetIndicatorFrame = CreateFrame("Frame", UUF:FetchFrameName("boss" .. i).."_TargetIndicator", BossFrame.Container, "BackdropTemplate")

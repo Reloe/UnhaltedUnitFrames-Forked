@@ -47,6 +47,24 @@ local function UpdateUnitSettings(unit, updateCallback, element)
 	end
 end
 
+local function CopyRaidSettingsToParty()
+	local RaidDB = GetUnitDB("raid")
+	local PartyDB = GetUnitDB("party")
+	if not RaidDB or not PartyDB then return end
+
+	wipe(PartyDB)
+	UUF:CopyTable(RaidDB, PartyDB)
+
+	PartyDB.Frame = PartyDB.Frame or {}
+	PartyDB.Frame.GrowthDirection = (PartyDB.Frame.GrowthDirection or "DOWN"):match("^(%a+)_") or PartyDB.Frame.GrowthDirection or "DOWN"
+	if PartyDB.Frame.SortBy ~= "ROLE" and PartyDB.Frame.SortBy ~= "INDEX" and PartyDB.Frame.SortBy ~= "NAME" then PartyDB.Frame.SortBy = "INDEX" end
+	PartyDB.Frame.RoleOrder = PartyDB.Frame.RoleOrder or {"TANK", "HEALER", "DAMAGER"}
+	PartyDB.Frame.ShowPlayer = false
+	PartyDB.Frame.AutoAdjustGroups = nil
+	PartyDB.Frame.Groups = nil
+	PartyDB.augmentation = nil
+end
+
 local UnitDBToUnitPrettyName = {
     player = "Player",
     target = "Target",
@@ -445,11 +463,11 @@ local function CreateFontSettings(containerParent)
     RaidSimpleGroup:SetLayout("Flow")
     Container:AddChild(RaidSimpleGroup)
 
-    GUIWidgets.CreateHeader(RaidSimpleGroup, "Raid Fonts")
+    GUIWidgets.CreateHeader(RaidSimpleGroup, "Party / Raid Fonts")
 
     local RaidFontDropdown = AG:Create("LSM30_Font")
     RaidFontDropdown:SetList(LSM:HashTable("font"))
-    RaidFontDropdown:SetLabel("Raid Font")
+    RaidFontDropdown:SetLabel("Party / Raid Font")
     RaidFontDropdown:SetValue(UUF.db.profile.General.Fonts.Raid.Font)
     RaidFontDropdown:SetRelativeWidth(0.5)
 	RaidFontDropdown:SetCallback("OnValueChanged", function(widget, _, value) widget:SetValue(value) UUF.db.profile.General.Fonts.Raid.Font = value reloadRequired = true UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
@@ -457,14 +475,14 @@ local function CreateFontSettings(containerParent)
 
     local RaidFontFlagDropdown = AG:Create("Dropdown")
     RaidFontFlagDropdown:SetList({[""] = "None", ["OUTLINE"] = "Outline", ["THICKOUTLINE"] = "Thick Outline", ["MONOCHROME"] = "Monochrome", ["MONOCHROMEOUTLINE"] = "Monochrome Outline", ["MONOCHROMETHICKOUTLINE"] = "Monochrome Thick Outline", ["OUTLINE, SLUG"] = "Outline Slug"})
-    RaidFontFlagDropdown:SetLabel("Raid Font Flag")
+    RaidFontFlagDropdown:SetLabel("Party / Raid Font Flag")
     RaidFontFlagDropdown:SetValue(UUF.db.profile.General.Fonts.Raid.FontFlag)
     RaidFontFlagDropdown:SetRelativeWidth(0.5)
 	RaidFontFlagDropdown:SetCallback("OnValueChanged", function(widget, _, value) widget:SetValue(value) UUF.db.profile.General.Fonts.Raid.FontFlag = value reloadRequired = true UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
     RaidSimpleGroup:AddChild(RaidFontFlagDropdown)
 
     local RaidShadowToggle = AG:Create("CheckBox")
-    RaidShadowToggle:SetLabel("Enable Raid Font Shadows")
+    RaidShadowToggle:SetLabel("Enable Party / Raid Font Shadows")
     RaidShadowToggle:SetValue(UUF.db.profile.General.Fonts.Raid.Shadow.Enabled)
     RaidShadowToggle:SetFullWidth(true)
 	RaidShadowToggle:SetCallback("OnValueChanged", function(_, _, value) UUF.db.profile.General.Fonts.Raid.Shadow.Enabled = value reloadRequired = true UUF:ResolveLSM() GUIWidgets.DeepDisable(RaidShadowGroup, not UUF.db.profile.General.Fonts.Raid.Shadow.Enabled) UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
@@ -477,7 +495,7 @@ local function CreateFontSettings(containerParent)
     RaidSimpleGroup:AddChild(RaidShadowGroup)
 
     local RaidShadowColourPicker = AG:Create("ColorPicker")
-    RaidShadowColourPicker:SetLabel("Raid Shadow Colour")
+    RaidShadowColourPicker:SetLabel("Party / Raid Shadow Colour")
     RaidShadowColourPicker:SetColor(unpack(UUF.db.profile.General.Fonts.Raid.Shadow.Colour))
     RaidShadowColourPicker:SetFullWidth(true)
 	RaidShadowColourPicker:SetCallback("OnValueChanged", function(_, _, r, g, b, a) UUF.db.profile.General.Fonts.Raid.Shadow.Colour = {r, g, b, a} reloadRequired = true UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
@@ -485,7 +503,7 @@ local function CreateFontSettings(containerParent)
     RaidShadowGroup:AddChild(RaidShadowColourPicker)
 
     local RaidShadowXSlider = AG:Create("Slider")
-    RaidShadowXSlider:SetLabel("Raid Shadow Offset X")
+    RaidShadowXSlider:SetLabel("Party / Raid Shadow Offset X")
     RaidShadowXSlider:SetValue(UUF.db.profile.General.Fonts.Raid.Shadow.XPos)
     RaidShadowXSlider:SetSliderValues(-5, 5, 1)
     RaidShadowXSlider:SetFullWidth(true)
@@ -494,7 +512,7 @@ local function CreateFontSettings(containerParent)
     RaidShadowGroup:AddChild(RaidShadowXSlider)
 
     local RaidShadowYSlider = AG:Create("Slider")
-    RaidShadowYSlider:SetLabel("Raid Shadow Offset Y")
+    RaidShadowYSlider:SetLabel("Party / Raid Shadow Offset Y")
     RaidShadowYSlider:SetValue(UUF.db.profile.General.Fonts.Raid.Shadow.YPos)
     RaidShadowYSlider:SetSliderValues(-5, 5, 1)
     RaidShadowYSlider:SetFullWidth(true)
@@ -508,7 +526,7 @@ end
 local function CreateTextureSettings(containerParent)
     local Container = GUIWidgets.CreateInlineGroup(containerParent, "Textures")
 
-    GUIWidgets.CreateInformationTag(Container,"Textures are applied to Unit Frames & Elements where appropriate. Raid Frames can use their own texture pair. More textures can be added via |cFF8080FFSharedMedia|r.")
+    GUIWidgets.CreateInformationTag(Container,"Textures are applied to Unit Frames & Elements where appropriate. Party and Raid Frames can use their own texture pair. More textures can be added via |cFF8080FFSharedMedia|r.")
 
     local ForegroundTextureDropdown = AG:Create("LSM30_Statusbar")
     ForegroundTextureDropdown:SetList(LSM:HashTable("statusbar"))
@@ -528,7 +546,7 @@ local function CreateTextureSettings(containerParent)
 
     local RaidForegroundTextureDropdown = AG:Create("LSM30_Statusbar")
     RaidForegroundTextureDropdown:SetList(LSM:HashTable("statusbar"))
-    RaidForegroundTextureDropdown:SetLabel("Raid Foreground Texture")
+    RaidForegroundTextureDropdown:SetLabel("Party / Raid Foreground Texture")
     RaidForegroundTextureDropdown:SetValue(UUF.db.profile.General.Textures.RaidForeground or UUF.db.profile.General.Textures.Foreground)
     RaidForegroundTextureDropdown:SetRelativeWidth(0.5)
     RaidForegroundTextureDropdown:SetCallback("OnValueChanged", function(widget, _, value) widget:SetValue(value) UUF.db.profile.General.Textures.RaidForeground = value UUF:ResolveLSM() UUF:UpdateAllUnitFrames() end)
@@ -536,7 +554,7 @@ local function CreateTextureSettings(containerParent)
 
     local RaidBackgroundTextureDropdown = AG:Create("LSM30_Statusbar")
     RaidBackgroundTextureDropdown:SetList(LSM:HashTable("statusbar"))
-    RaidBackgroundTextureDropdown:SetLabel("Raid Background Texture")
+    RaidBackgroundTextureDropdown:SetLabel("Party / Raid Background Texture")
     RaidBackgroundTextureDropdown:SetValue(UUF.db.profile.General.Textures.RaidBackground or UUF.db.profile.General.Textures.Background)
     RaidBackgroundTextureDropdown:SetRelativeWidth(0.5)
     RaidBackgroundTextureDropdown:SetCallback("OnValueChanged", function(widget, _, value) widget:SetValue(value) UUF.db.profile.General.Textures.RaidBackground = value UUF:ResolveLSM() UUF:UpdateAllUnitFrames() end)
@@ -1032,28 +1050,6 @@ local function CreateFrameSettings(containerParent, unit, unitHasParent, updateC
             StaticPopup_Show("UUF_RELOAD_UI")
         end)
         ColourContainer:AddChild(ShowPlayerToggle)
-    end
-
-    if unit == "raid" then
-        local UseRaidStyleForPartyToggle = AG:Create("CheckBox")
-        UseRaidStyleForPartyToggle:SetLabel("Use Raid-Frame Style for Party")
-        UseRaidStyleForPartyToggle:SetValue(FrameDB.UseRaidStyleForParty)
-        UseRaidStyleForPartyToggle:SetRelativeWidth(primaryToggleWidth)
-        UseRaidStyleForPartyToggle:SetCallback("OnValueChanged", function(_, _, value)
-            StaticPopupDialogs["UUF_RELOAD_UI"] = {
-                text = "You must reload to apply this change, do you want to reload now?",
-                button1 = "Reload Now",
-                button2 = "Later",
-                showAlert = true,
-                OnAccept = function() FrameDB.UseRaidStyleForParty = value C_UI.Reload() end,
-                OnCancel = function() UseRaidStyleForPartyToggle:SetValue(FrameDB.UseRaidStyleForParty) containerParent:DoLayout() end,
-                timeout = 0,
-                whileDead = true,
-                hideOnEscape = true,
-            }
-            StaticPopup_Show("UUF_RELOAD_UI")
-        end)
-        ColourContainer:AddChild(UseRaidStyleForPartyToggle)
     end
 
     local SmoothUpdatesToggle = AG:Create("CheckBox")
@@ -3037,6 +3033,79 @@ local function CreateStatusSettings(containerParent, unit, statusDB, updateCallb
     RefreshStatusGUI()
 end
 
+local function CreateAFKDNDIndicatorSettings(containerParent, unit, updateCallback)
+	local IndicatorDB = UUF:GetAFKDNDIndicatorDB(nil, unit)
+
+	local ToggleContainer = GUIWidgets.CreateInlineGroup(containerParent, "AFK / DND Settings")
+
+	local Toggle = AG:Create("CheckBox")
+	Toggle:SetLabel("Enable |cFF8080FFAFK / DND|r Indicator")
+	Toggle:SetValue(IndicatorDB.Enabled)
+	Toggle:SetCallback("OnValueChanged", function(_, _, value) IndicatorDB.Enabled = value updateCallback() RefreshAFKDNDIndicatorGUI() end)
+	Toggle:SetRelativeWidth(1)
+	ToggleContainer:AddChild(Toggle)
+
+	local LayoutContainer = GUIWidgets.CreateInlineGroup(containerParent, "Layout & Positioning")
+
+	local AnchorFromDropdown = AG:Create("Dropdown")
+	AnchorFromDropdown:SetList(AnchorPoints[1], AnchorPoints[2])
+	AnchorFromDropdown:SetLabel("Anchor From")
+	AnchorFromDropdown:SetValue(IndicatorDB.Layout[1])
+	AnchorFromDropdown:SetRelativeWidth(0.5)
+	AnchorFromDropdown:SetCallback("OnValueChanged", function(_, _, value) IndicatorDB.Layout[1] = value updateCallback() end)
+	LayoutContainer:AddChild(AnchorFromDropdown)
+
+	local AnchorToDropdown = AG:Create("Dropdown")
+	AnchorToDropdown:SetList(AnchorPoints[1], AnchorPoints[2])
+	AnchorToDropdown:SetLabel("Anchor To")
+	AnchorToDropdown:SetValue(IndicatorDB.Layout[2])
+	AnchorToDropdown:SetRelativeWidth(0.5)
+	AnchorToDropdown:SetCallback("OnValueChanged", function(_, _, value) IndicatorDB.Layout[2] = value updateCallback() end)
+	LayoutContainer:AddChild(AnchorToDropdown)
+
+	local XPosSlider = AG:Create("Slider")
+	XPosSlider:SetLabel("X Position")
+	XPosSlider:SetValue(IndicatorDB.Layout[3])
+	XPosSlider:SetSliderValues(-3000, 3000, 0.1)
+	XPosSlider:SetRelativeWidth(0.33)
+	XPosSlider:SetCallback("OnValueChanged", function(_, _, value) IndicatorDB.Layout[3] = value updateCallback() end)
+	LayoutContainer:AddChild(XPosSlider)
+
+	local YPosSlider = AG:Create("Slider")
+	YPosSlider:SetLabel("Y Position")
+	YPosSlider:SetValue(IndicatorDB.Layout[4])
+	YPosSlider:SetSliderValues(-3000, 3000, 0.1)
+	YPosSlider:SetRelativeWidth(0.33)
+	YPosSlider:SetCallback("OnValueChanged", function(_, _, value) IndicatorDB.Layout[4] = value updateCallback() end)
+	LayoutContainer:AddChild(YPosSlider)
+
+	local FontSizeSlider = AG:Create("Slider")
+	FontSizeSlider:SetLabel("Font Size")
+	FontSizeSlider:SetValue(IndicatorDB.FontSize)
+	FontSizeSlider:SetSliderValues(1, 64, 1)
+	FontSizeSlider:SetRelativeWidth(0.33)
+	FontSizeSlider:SetCallback("OnValueChanged", function(_, _, value) IndicatorDB.FontSize = value updateCallback() end)
+	LayoutContainer:AddChild(FontSizeSlider)
+
+	local ColourContainer = GUIWidgets.CreateInlineGroup(containerParent, "Colour")
+
+	local ColourPicker = AG:Create("ColorPicker")
+	ColourPicker:SetLabel("Text Colour")
+	ColourPicker:SetColor(IndicatorDB.Colour[1], IndicatorDB.Colour[2], IndicatorDB.Colour[3], IndicatorDB.Colour[4] or 1)
+	ColourPicker:SetHasAlpha(true)
+	ColourPicker:SetRelativeWidth(1)
+	ColourPicker:SetCallback("OnValueChanged", function(_, _, r, g, b, a) IndicatorDB.Colour = {r, g, b, a or 1} updateCallback() end)
+	ColourContainer:AddChild(ColourPicker)
+
+	function RefreshAFKDNDIndicatorGUI()
+		GUIWidgets.DeepDisable(ToggleContainer, not IndicatorDB.Enabled, Toggle)
+		GUIWidgets.DeepDisable(LayoutContainer, not IndicatorDB.Enabled, Toggle)
+		GUIWidgets.DeepDisable(ColourContainer, not IndicatorDB.Enabled, Toggle)
+	end
+
+	RefreshAFKDNDIndicatorGUI()
+end
+
 local function CreateMouseoverSettings(containerParent, unit, updateCallback)
     local MouseoverDB = GetUnitDB(unit).Indicators.Mouseover
 
@@ -3253,6 +3322,8 @@ local function CreateIndicatorSettings(containerParent, unit)
             CreateStatusSettings(IndicatorContainer, unit, "Resting", function() UUF:UpdateUnitRestingIndicator(UUF[unit:upper()], unit) end)
         elseif IndicatorTab == "Combat" then
             CreateStatusSettings(IndicatorContainer, unit, "Combat", function() UUF:UpdateUnitCombatIndicator(UUF[unit:upper()], unit) end)
+		elseif IndicatorTab == "AFKDND" then
+			CreateAFKDNDIndicatorSettings(IndicatorContainer, unit, function() UpdateUnitSettings(unit, nil, "Indicators") end)
         elseif IndicatorTab == "PvP" and unit == "player" then
             CreatePvPIndicatorSettings(IndicatorContainer, function() UUF:UpdateUnitPvPIndicator(UUF.PLAYER, "player") end)
         elseif IndicatorTab == "Mouseover" then
@@ -3279,6 +3350,7 @@ local function CreateIndicatorSettings(containerParent, unit)
             { text = "Leader & Assistant", value = "LeaderAssistant" },
             { text = "Resting", value = "Resting" },
             { text = "Combat", value = "Combat" },
+            { text = "AFK / DND", value = "AFKDND" },
             { text = "PvP", value = "PvP" },
             { text = "Mouseover", value = "Mouseover" },
             { text = "Threat Indicator", value = "ThreatIndicator" },
@@ -3289,6 +3361,7 @@ local function CreateIndicatorSettings(containerParent, unit)
             { text = "Raid Target Marker", value = "RaidTargetMarker" },
             { text = "Leader & Assistant", value = "LeaderAssistant" },
             { text = "Combat", value = "Combat" },
+            { text = "AFK / DND", value = "AFKDND" },
             { text = "Mouseover", value = "Mouseover" },
             { text = "Target Indicator", value = "TargetIndicator" },
             { text = "Threat Indicator", value = "ThreatIndicator" },
@@ -3299,6 +3372,7 @@ local function CreateIndicatorSettings(containerParent, unit)
         IndicatorContainerTabGroup:SetTabs({
             { text = "Raid Target Marker", value = "RaidTargetMarker" },
             { text = "Leader & Assistant", value = "LeaderAssistant" },
+            { text = "AFK / DND", value = "AFKDND" },
             { text = "Mouseover", value = "Mouseover" },
             { text = "Target Indicator", value = "TargetIndicator" },
             { text = "Threat Indicator", value = "ThreatIndicator" },
@@ -3311,6 +3385,7 @@ local function CreateIndicatorSettings(containerParent, unit)
     elseif unit == "focus" or unit == "pet" then
         IndicatorContainerTabGroup:SetTabs({
             { text = "Raid Target Marker", value = "RaidTargetMarker" },
+            { text = "AFK / DND", value = "AFKDND" },
             { text = "Mouseover", value = "Mouseover" },
             { text = "Target Indicator", value = "TargetIndicator" },
             { text = "Threat Indicator", value = "ThreatIndicator" },
@@ -3318,6 +3393,7 @@ local function CreateIndicatorSettings(containerParent, unit)
     elseif unit == "targettarget" or unit == "focustarget" or unit == "boss" then
         IndicatorContainerTabGroup:SetTabs({
             { text = "Raid Target Marker", value = "RaidTargetMarker" },
+            { text = "AFK / DND", value = "AFKDND" },
             { text = "Mouseover", value = "Mouseover" },
             { text = "Target Indicator", value = "TargetIndicator" },
         })
@@ -4309,6 +4385,26 @@ local function CreateUnitSettings(containerParent, unit)
 	ToggleMoversButton:SetRelativeWidth(unit == "augmentation" and 0.5 or 0.33)
 	ToggleMoversButton:SetCallback("OnClick", function() ToggleMoversButton:SetText(UUF:ToggleMovers() and "Lock Movers" or "Unlock Movers") end)
 	containerParent:AddChild(ToggleMoversButton)
+
+	if unit == "raid" then
+		local CopyRaidToPartyButton = AG:Create("Button")
+		CopyRaidToPartyButton:SetText("Copy Raid Settings to Party")
+		CopyRaidToPartyButton:SetRelativeWidth(0.33)
+		CopyRaidToPartyButton:SetCallback("OnClick", function()
+			StaticPopupDialogs["UUF_COPY_RAID_TO_PARTY"] = {
+				text = "Copy all raid settings to party settings? This will replace your current party settings.",
+				button1 = "Copy & Reload",
+				button2 = "Cancel",
+				showAlert = true,
+				OnAccept = function() CopyRaidSettingsToParty() C_UI.Reload() end,
+				timeout = 0,
+				whileDead = true,
+				hideOnEscape = true,
+			}
+			StaticPopup_Show("UUF_COPY_RAID_TO_PARTY")
+		end)
+		containerParent:AddChild(CopyRaidToPartyButton)
+	end
 
     local SettingsContainer = AG:Create("SimpleGroup")
     SettingsContainer:SetFullWidth(true)
