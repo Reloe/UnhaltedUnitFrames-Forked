@@ -1,0 +1,56 @@
+name: Package Addon
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install SVN (Subversion)
+        run: sudo apt update && sudo apt install subversion -y
+
+      - name: Run the Packager
+        shell: bash
+        run: |
+          set -euxo pipefail
+          chmod +x .release/release.sh
+          bash -x ./.release/release.sh 2>&1 | tee packager.log
+          echo "---- ZIP search ----"
+          find "$GITHUB_WORKSPACE" -type f -name '*.zip' -print
+          echo "---- .release contents ----"
+          ls -lah .release || true
+
+      - name: Upload packager log
+        uses: actions/upload-artifact@v4
+        with:
+          name: packager-log
+          path: packager.log
+
+      - name: List files (debugging)
+        run: |
+          ls -R .release || true
+          find . -maxdepth 3 -name "*.zip" -print
+
+      - name: Upload Packaged Addon as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: packaged-addon
+          path: ${{ github.workspace }}/.release/*.zip
+          if-no-files-found: error
+          include-hidden-files: true
+
+      - name: Upload ZIP to GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: ${{ github.workspace }}/.release/*.zip
+          token: ${{ secrets.GH_PAT }}
