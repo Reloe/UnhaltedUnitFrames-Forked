@@ -120,6 +120,7 @@ local Defaults = {
                     [3] = {1, 0, 0},
                 },
                 Class = GetDefaultClassColours(),
+                RaidClass = GetDefaultClassColours(),
             }
         },
         Units = {

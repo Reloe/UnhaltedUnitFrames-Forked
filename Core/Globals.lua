@@ -356,6 +356,18 @@ end
 
 function UUF:LoadCustomColours()
     local General = UUF.db.profile.General
+    local DefaultClassColours = UUF:GetDefaultDB().profile.General.Colours.Class
+
+    General.Colours.Class = General.Colours.Class or {}
+    for classToken, defaultColor in pairs(DefaultClassColours) do
+        General.Colours.Class[classToken] = General.Colours.Class[classToken] or {defaultColor[1], defaultColor[2], defaultColor[3]}
+    end
+
+    General.Colours.RaidClass = General.Colours.RaidClass or {}
+    for classToken, defaultColor in pairs(DefaultClassColours) do
+        local fallbackColor = General.Colours.Class[classToken] or defaultColor
+        General.Colours.RaidClass[classToken] = General.Colours.RaidClass[classToken] or {fallbackColor[1], fallbackColor[2], fallbackColor[3]}
+    end
 
     -- Map power type enums to their string names
     local PowerTypesToString = {
@@ -446,9 +458,17 @@ function UUF:LoadCustomColours()
     end
 end
 
-function UUF:GetConfiguredClassColour(classToken)
+function UUF:UsesRaidClassColours(unitFrame, unit)
+    local configuredUnit = unitFrame and unitFrame.isAugmentationRaidFrame and "augmentation" or unitFrame and unitFrame.UUFConfiguredUnit or unit
+    local normalizedUnit = configuredUnit and UUF:GetNormalizedUnit(configuredUnit)
+    return normalizedUnit == "party" or normalizedUnit == "raid" or normalizedUnit == "augmentation"
+end
+
+function UUF:GetConfiguredClassColour(classToken, unitFrame, unit)
     if not classToken then return end
-    local color = UUF.db.profile.General.Colours.Class and UUF.db.profile.General.Colours.Class[classToken]
+    local ColourDB = UUF.db.profile.General.Colours
+    local classColours = UUF:UsesRaidClassColours(unitFrame, unit) and ColourDB.RaidClass or ColourDB.Class
+    local color = classColours and classColours[classToken]
     if color then
         return color[1], color[2], color[3]
     end
@@ -501,10 +521,10 @@ function UUF:SetJustification(anchorFrom)
     end
 end
 
-function UUF:GetUnitColour(unit)
+function UUF:GetUnitColour(unit, unitFrame)
     if UnitIsPlayer(unit) or UnitInPartyIsAI(unit) then
         local _, class = UnitClass(unit)
-        local r, g, b = UUF:GetConfiguredClassColour(class)
+        local r, g, b = UUF:GetConfiguredClassColour(class, unitFrame, unit)
         if r then return r, g, b end
     end
     local reaction = UnitReaction(unit, "player")
@@ -517,7 +537,7 @@ end
 
 function UUF:GetClassColour(unitFrame)
     local _, class = UnitClass(unitFrame.unit)
-    local r, g, b = UUF:GetConfiguredClassColour(class)
+    local r, g, b = UUF:GetConfiguredClassColour(class, unitFrame, unitFrame.unit)
     if r then return {r, g, b, 1} end
 end
 

@@ -23,7 +23,7 @@ local function SetHealthBackgroundColour(unitFrame, unit, HealthBarDB, forceUpda
         unitFrame.HealthBackground:SetStatusBarColor(r, g, b, HealthBarDB.BackgroundOpacity)
     elseif HealthBarDB.ColourBackgroundByClass then
         local unitToColour = backgroundUnit ~= "pet" and backgroundUnit or "player"
-        local r, g, b = UUF:GetUnitColour(unitToColour)
+        local r, g, b = UUF:GetUnitColour(unitToColour, unitFrame)
         unitFrame.HealthBackground:SetStatusBarColor(r, g, b, HealthBarDB.BackgroundOpacity)
     else
         unitFrame.HealthBackground:SetStatusBarColor(HealthBarDB.Background[1], HealthBarDB.Background[2], HealthBarDB.Background[3], HealthBarDB.BackgroundOpacity)
@@ -58,10 +58,14 @@ function UUF:CreateUnitHealthBar(unitFrame, unit)
         HealthBar.colorDisconnected = HealthBarDB.ColourWhenDisconnected
         HealthBar.smoothing = HealthBarDB.Smooth ~= false and StatusBarInterpolation.ExponentialEaseOut or StatusBarInterpolation.Immediate
 		HealthBar.PostUpdateColor = function(healthBar, unit, colour)
-			if colour and colour ~= oUF.colors.health then return end
 			local currentHealthBarDB = UUF:GetUnitDB(unitFrame, unit).HealthBar
+			if UUF:UsesRaidClassColours(unitFrame, unit) and currentHealthBarDB.ColourByClass and UnitIsPlayer(unit) and (not currentHealthBarDB.ColourWhenDisconnected or UnitIsConnected(unit)) and (not currentHealthBarDB.ColourWhenTapped or not UnitIsTapDenied(unit)) then
+				local r, g, b = UUF:GetConfiguredClassColour(select(2, UnitClass(unit)), unitFrame, unit)
+				if r then healthBar:SetStatusBarColor(r, g, b, currentHealthBarDB.ForegroundOpacity) return end
+			end
+			if colour and colour ~= oUF.colors.health then return end
 			if unit == "pet" and currentHealthBarDB.ColourByClass then
-				local r, g, b = UUF:GetConfiguredClassColour(select(2, UnitClass("player")))
+				local r, g, b = UUF:GetConfiguredClassColour(select(2, UnitClass("player")), unitFrame, unit)
 				if r then healthBar:SetStatusBarColor(r, g, b, currentHealthBarDB.ForegroundOpacity) return end
 			end
 			healthBar:SetStatusBarColor(currentHealthBarDB.Foreground[1], currentHealthBarDB.Foreground[2], currentHealthBarDB.Foreground[3], currentHealthBarDB.ForegroundOpacity)

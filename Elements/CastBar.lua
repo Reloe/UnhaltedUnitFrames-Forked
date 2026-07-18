@@ -5,7 +5,7 @@ local function SetCastBarColour(castBar, unit, CastBarDB)
 	if CastBarDB.ColourByClass then
 		local unitForClass = unit == "pet" and "player" or unit
 		local unitClass = select(2, UnitClass(unitForClass))
-		local classR, classG, classB = UUF:GetConfiguredClassColour(unitClass)
+		local classR, classG, classB = UUF:GetConfiguredClassColour(unitClass, nil, unit)
 		if classR then r, g, b, a = classR, classG, classB, CastBarDB.ForegroundOpacity end
 	end
 	if not r then r, g, b, a = unpack(CastBarDB.Foreground) end

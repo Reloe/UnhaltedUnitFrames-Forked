@@ -689,6 +689,11 @@ local function CreateColourSettings(containerParent)
     for classToken, color in pairs(UUF:GetDefaultDB().profile.General.Colours.Class) do
         UUF.db.profile.General.Colours.Class[classToken] = UUF.db.profile.General.Colours.Class[classToken] or {color[1], color[2], color[3]}
     end
+    UUF.db.profile.General.Colours.RaidClass = UUF.db.profile.General.Colours.RaidClass or {}
+    for classToken, color in pairs(UUF:GetDefaultDB().profile.General.Colours.Class) do
+        local fallbackColour = UUF.db.profile.General.Colours.Class[classToken] or color
+        UUF.db.profile.General.Colours.RaidClass[classToken] = UUF.db.profile.General.Colours.RaidClass[classToken] or {fallbackColour[1], fallbackColour[2], fallbackColour[3]}
+    end
     UUF.db.profile.General.Colours.Status = UUF.db.profile.General.Colours.Status or {}
     for statusType, color in pairs(UUF:GetDefaultDB().profile.General.Colours.Status) do
         UUF.db.profile.General.Colours.Status[statusType] = UUF.db.profile.General.Colours.Status[statusType] or {color[1], color[2], color[3]}
@@ -748,6 +753,12 @@ local function CreateColourSettings(containerParent)
     ResetClassColoursButton:SetRelativeWidth(0.33)
     Container:AddChild(ResetClassColoursButton)
 
+    local ResetRaidClassColoursButton = AG:Create("Button")
+    ResetRaidClassColoursButton:SetText("Party / Raid Class Colours")
+    ResetRaidClassColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.RaidClass or UUF:GetDefaultDB().profile.General.Colours.Class, UUF.db.profile.General.Colours.RaidClass) UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
+    ResetRaidClassColoursButton:SetRelativeWidth(0.33)
+    Container:AddChild(ResetRaidClassColoursButton)
+
     GUIWidgets.CreateHeader(Container, "Power")
 
     local PowerOrder = {0, 1, 2, 3, 6, 8, 11, 13, 17, 18}
@@ -805,6 +816,19 @@ local function CreateColourSettings(containerParent)
         local R, G, B = unpack(UUF.db.profile.General.Colours.Class[classToken])
         ClassColourPicker:SetColor(R, G, B)
         ClassColourPicker:SetCallback("OnValueChanged", function(_, _, r, g, b) UUF.db.profile.General.Colours.Class[classToken] = {r, g, b} UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() end)
+        ClassColourPicker:SetHasAlpha(false)
+        ClassColourPicker:SetRelativeWidth(0.25)
+        Container:AddChild(ClassColourPicker)
+    end
+
+    GUIWidgets.CreateHeader(Container, "Party / Raid Class")
+
+    for _, classToken in ipairs(ClassOrder) do
+        local ClassColourPicker = AG:Create("ColorPicker")
+        ClassColourPicker:SetLabel(LOCALIZED_CLASS_NAMES_MALE[classToken] or classToken)
+        local R, G, B = unpack(UUF.db.profile.General.Colours.RaidClass[classToken])
+        ClassColourPicker:SetColor(R, G, B)
+        ClassColourPicker:SetCallback("OnValueChanged", function(_, _, r, g, b) UUF.db.profile.General.Colours.RaidClass[classToken] = {r, g, b} UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() end)
         ClassColourPicker:SetHasAlpha(false)
         ClassColourPicker:SetRelativeWidth(0.25)
         Container:AddChild(ClassColourPicker)
