@@ -683,8 +683,15 @@ local function CreateRangeSettings(containerParent)
     GUIWidgets.DeepDisable(Container, not RangeDB.Enabled, Toggle)
 end
 
-local function CreateColourSettings(containerParent)
-    local Container = GUIWidgets.CreateInlineGroup(containerParent, "Colours")
+local function CreateColourSettings(containerParent, existingContainer)
+    local Container = existingContainer or GUIWidgets.CreateInlineGroup(containerParent, "Colours")
+	local function RefreshColourSettings()
+		Container:ReleaseChildren()
+		CreateColourSettings(containerParent, Container)
+		Container:DoLayout()
+		containerParent:DoLayout()
+	end
+
     UUF.db.profile.General.Colours.Class = UUF.db.profile.General.Colours.Class or {}
     for classToken, color in pairs(UUF:GetDefaultDB().profile.General.Colours.Class) do
         UUF.db.profile.General.Colours.Class[classToken] = UUF.db.profile.General.Colours.Class[classToken] or {color[1], color[2], color[3]}
@@ -707,55 +714,55 @@ local function CreateColourSettings(containerParent)
 
     local ResetAllColoursButton = AG:Create("Button")
     ResetAllColoursButton:SetText("All Colours")
-    ResetAllColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours, UUF.db.profile.General.Colours) reloadRequired = true UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
+    ResetAllColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours, UUF.db.profile.General.Colours) reloadRequired = true UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() RefreshColourSettings() end)
     ResetAllColoursButton:SetRelativeWidth(1)
     Container:AddChild(ResetAllColoursButton)
 
     local ResetPowerColoursButton = AG:Create("Button")
     ResetPowerColoursButton:SetText("Power Colours")
-    ResetPowerColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Power, UUF.db.profile.General.Colours.Power) Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
+    ResetPowerColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Power, UUF.db.profile.General.Colours.Power) RefreshColourSettings() end)
     ResetPowerColoursButton:SetRelativeWidth(0.33)
     Container:AddChild(ResetPowerColoursButton)
 
     local ResetSecondaryPowerColoursButton = AG:Create("Button")
     ResetSecondaryPowerColoursButton:SetText("Secondary Power Colours")
-    ResetSecondaryPowerColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.SecondaryPower, UUF.db.profile.General.Colours.SecondaryPower) Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
+    ResetSecondaryPowerColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.SecondaryPower, UUF.db.profile.General.Colours.SecondaryPower) RefreshColourSettings() end)
     ResetSecondaryPowerColoursButton:SetRelativeWidth(0.33)
     Container:AddChild(ResetSecondaryPowerColoursButton)
 
     local ResetReactionColoursButton = AG:Create("Button")
     ResetReactionColoursButton:SetText("Reaction Colours")
-    ResetReactionColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Reaction, UUF.db.profile.General.Colours.Reaction) Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
+    ResetReactionColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Reaction, UUF.db.profile.General.Colours.Reaction) RefreshColourSettings() end)
     ResetReactionColoursButton:SetRelativeWidth(0.33)
     Container:AddChild(ResetReactionColoursButton)
 
     local ResetDispelColoursButton = AG:Create("Button")
     ResetDispelColoursButton:SetText("Dispel Colours")
-    ResetDispelColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Dispel, UUF.db.profile.General.Colours.Dispel) reloadRequired = true Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
+    ResetDispelColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Dispel, UUF.db.profile.General.Colours.Dispel) reloadRequired = true RefreshColourSettings() end)
     ResetDispelColoursButton:SetRelativeWidth(0.33)
     Container:AddChild(ResetDispelColoursButton)
 
     local ResetStatusColoursButton = AG:Create("Button")
     ResetStatusColoursButton:SetText("Status Colours")
-    ResetStatusColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Status, UUF.db.profile.General.Colours.Status) UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
+    ResetStatusColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Status, UUF.db.profile.General.Colours.Status) UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() RefreshColourSettings() end)
     ResetStatusColoursButton:SetRelativeWidth(0.33)
     Container:AddChild(ResetStatusColoursButton)
 
     local ResetThreatColoursButton = AG:Create("Button")
     ResetThreatColoursButton:SetText("Threat Colours")
-    ResetThreatColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Threat, UUF.db.profile.General.Colours.Threat) UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
+    ResetThreatColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Threat, UUF.db.profile.General.Colours.Threat) UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() RefreshColourSettings() end)
     ResetThreatColoursButton:SetRelativeWidth(0.33)
     Container:AddChild(ResetThreatColoursButton)
 
     local ResetClassColoursButton = AG:Create("Button")
     ResetClassColoursButton:SetText("Class Colours")
-    ResetClassColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Class, UUF.db.profile.General.Colours.Class) UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
+    ResetClassColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Class, UUF.db.profile.General.Colours.Class) UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() RefreshColourSettings() end)
     ResetClassColoursButton:SetRelativeWidth(0.33)
     Container:AddChild(ResetClassColoursButton)
 
     local ResetRaidClassColoursButton = AG:Create("Button")
     ResetRaidClassColoursButton:SetText("Party / Raid Class Colours")
-    ResetRaidClassColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.RaidClass or UUF:GetDefaultDB().profile.General.Colours.Class, UUF.db.profile.General.Colours.RaidClass) UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
+    ResetRaidClassColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.RaidClass or UUF:GetDefaultDB().profile.General.Colours.Class, UUF.db.profile.General.Colours.RaidClass) UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() RefreshColourSettings() end)
     ResetRaidClassColoursButton:SetRelativeWidth(0.33)
     Container:AddChild(ResetRaidClassColoursButton)
 
