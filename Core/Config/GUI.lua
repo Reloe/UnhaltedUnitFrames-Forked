@@ -296,15 +296,21 @@ end
 
 local function GenerateSupportText(parentFrame)
     local SupportOptions = {
-        -- "Support Me on |TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Support\\Ko-Fi.png:13:18|t |cFF8080FFKo-Fi|r!",
-        -- "Support Me on |TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Support\\Patreon.png:14:14|t |cFF8080FFPatreon|r!",
-        -- "|TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Support\\PayPal.png:20:18|t |cFF8080FFPayPal Donations|r are appreciated!",
-        -- "Join the |TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Support\\Discord.png:18:18|t |cFF8080FFDiscord|r Community!",
-        "Report Issues / Feedback on |TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Support\\GitHub.png:18:18|t |cFF8080FFGitHub|r!",
-        "Follow Me on |TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Support\\Twitch.png:18:14|t |cFF8080FFTwitch|r!",
-        "|cFF8080FFSupport|r is truly appreciated |TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Emotes\\peepoLove.png:18:18|t " .. "|cFF8080FFDevelopment|r takes time & effort."
+        -- { text = "Support Me on |TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Support\\Ko-Fi.png:13:18|t |cFF8080FFKo-Fi|r!" },
+        -- { text = "Support Me on |TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Support\\Patreon.png:14:14|t |cFF8080FFPatreon|r!" },
+        -- { text = "|TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Support\\PayPal.png:20:18|t |cFF8080FFPayPal Donations|r are appreciated!" },
+        { text = "Report Issues / Feedback on |TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Support\\GitHub.png:18:18|t |cFF8080FFGitHub|r!", title = "Open GitHub", url = "https://github.com/Reloe/UnhaltedUnitFrames-Forked" },
+        { text = "Follow Me on |TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Support\\Twitch.png:18:14|t |cFF8080FFTwitch|r!", title = "Open Twitch", url = "https://www.twitch.tv/unhaltedgb" },
+        { text = "|cFF8080FFSupport|r is truly appreciated |TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Emotes\\peepoLove.png:18:18|t " .. "|cFF8080FFDevelopment|r takes time & effort." }
     }
-    parentFrame.statustext:SetText(SupportOptions[math.random(1, #SupportOptions)])
+    local supportOption = SupportOptions[math.random(1, #SupportOptions)]
+    parentFrame.statustext:SetText(supportOption.text)
+    local statusButton = parentFrame.statustext:GetParent()
+    if statusButton and supportOption.url then
+        statusButton:SetScript("OnClick", function() UUF:OpenURL(supportOption.title, supportOption.url) end)
+    elseif statusButton then
+        statusButton:SetScript("OnClick", nil)
+    end
 end
 
 local function BuildMainNavigationTree()
@@ -4862,15 +4868,19 @@ function UUF:CreateGUI()
 
         if MainTab == "General" then
             local ScrollFrame = GUIWidgets.CreateScrollFrame(Wrapper)
+            local GeneralContainer = AG:Create("SimpleGroup")
+            GeneralContainer:SetFullWidth(true)
+            GeneralContainer:SetLayout("Flow")
+            ScrollFrame:AddChild(GeneralContainer)
 
-            CreateUIScaleSettings(ScrollFrame)
-            CreateColourSettings(ScrollFrame)
+            CreateUIScaleSettings(GeneralContainer)
+            CreateColourSettings(GeneralContainer)
 
             local SupportMeContainer = AG:Create("InlineGroup")
             SupportMeContainer:SetTitle("|TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Emotes\\peepoLove.png:18:18|t  How To Support " .. UUF.PRETTY_ADDON_NAME .. " Development")
             SupportMeContainer:SetLayout("Flow")
             SupportMeContainer:SetFullWidth(true)
-            ScrollFrame:AddChild(SupportMeContainer)
+            GeneralContainer:AddChild(SupportMeContainer)
 
             local TwitchInteractive = AG:Create("InteractiveLabel")
             TwitchInteractive:SetText("|TInterface\\AddOns\\UnhaltedUnitFrames\\Media\\Support\\Twitch.png:25:21|t |cFF8080FFTwitch|r")
