@@ -255,6 +255,12 @@ local Defaults = {
                     Style = "2D",
                 },
                 Indicators = {
+                    AFKDND = {
+                        Enabled = true,
+                        FontSize = 12,
+                        Layout = {"CENTER", "CENTER", 0, 0},
+                        Colour = {1, 1, 1, 1},
+                    },
                     RaidTargetMarker = {
                         Enabled = true,
                         Size = 24,
@@ -481,6 +487,12 @@ local Defaults = {
                     Style = "2D",
                 },
                 Indicators = {
+                    AFKDND = {
+                        Enabled = true,
+                        FontSize = 12,
+                        Layout = {"CENTER", "CENTER", 0, 0},
+                        Colour = {1, 1, 1, 1},
+                    },
                     RaidTargetMarker = {
                         Enabled = true,
                         Size = 24,
@@ -671,6 +683,12 @@ local Defaults = {
                     Style = "2D",
                 },
                 Indicators = {
+                    AFKDND = {
+                        Enabled = true,
+                        FontSize = 12,
+                        Layout = {"CENTER", "CENTER", 0, 0},
+                        Colour = {1, 1, 1, 1},
+                    },
                     RaidTargetMarker = {
                         Enabled = true,
                         Size = 16,
@@ -871,6 +889,12 @@ local Defaults = {
                     Style = "2D",
                 },
                 Indicators = {
+                    AFKDND = {
+                        Enabled = true,
+                        FontSize = 12,
+                        Layout = {"CENTER", "CENTER", 0, 0},
+                        Colour = {1, 1, 1, 1},
+                    },
                     RaidTargetMarker = {
                         Enabled = true,
                         Size = 16,
@@ -1033,6 +1057,12 @@ local Defaults = {
                     Style = "2D",
                 },
                 Indicators = {
+                    AFKDND = {
+                        Enabled = true,
+                        FontSize = 12,
+                        Layout = {"CENTER", "CENTER", 0, 0},
+                        Colour = {1, 1, 1, 1},
+                    },
                     RaidTargetMarker = {
                         Enabled = true,
                         Size = 16,
@@ -1228,6 +1258,12 @@ local Defaults = {
                     Style = "2D",
                 },
                 Indicators = {
+                    AFKDND = {
+                        Enabled = true,
+                        FontSize = 12,
+                        Layout = {"CENTER", "CENTER", 0, 0},
+                        Colour = {1, 1, 1, 1},
+                    },
                     RaidTargetMarker = {
                         Enabled = false,
                         Size = 16,
@@ -1426,6 +1462,12 @@ local Defaults = {
                     Style = "2D",
                 },
                 Indicators = {
+                    AFKDND = {
+                        Enabled = true,
+                        FontSize = 12,
+                        Layout = {"CENTER", "CENTER", 0, 0},
+                        Colour = {1, 1, 1, 1},
+                    },
                     RaidTargetMarker = {
                         Enabled = true,
                         Size = 24,
@@ -1586,6 +1628,12 @@ local Defaults = {
                     BackgroundMultiplier = 0.25,
                 },
                 Indicators = {
+                    AFKDND = {
+                        Enabled = true,
+                        FontSize = 12,
+                        Layout = {"CENTER", "CENTER", 0, 0},
+                        Colour = {1, 1, 1, 1},
+                    },
                     RaidTargetMarker = {
                         Enabled = true,
                         Size = 24,
@@ -1720,7 +1768,6 @@ local Defaults = {
                     Layout = {"LEFT", "LEFT", 1.1000000000004, 0.10000000000036, 1},
                     GrowthDirection = "LEFT_DOWN",
                     SortBy = "GROUP",
-                    UseRaidStyleForParty = false,
                     AutoAdjustGroups = false,
                     Groups = {[1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] = true, [7] = false, [8] = false},
                     FrameStrata = "LOW",
@@ -1785,6 +1832,12 @@ local Defaults = {
                     BackgroundMultiplier = 0.25,
                 },
                 Indicators = {
+                    AFKDND = {
+                        Enabled = true,
+                        FontSize = 12,
+                        Layout = {"CENTER", "CENTER", 0, 0},
+                        Colour = {1, 1, 1, 1},
+                    },
                     RaidTargetMarker = {
                         Enabled = true,
                         Size = 24,
@@ -1981,6 +2034,12 @@ local Defaults = {
 						BackgroundMultiplier = 0.25,
 					},
 					Indicators = {
+						AFKDND = {
+							Enabled = true,
+							FontSize = 12,
+							Layout = {"CENTER", "CENTER", 0, 0},
+							Colour = {1, 1, 1, 1},
+						},
 						RaidTargetMarker = {
 							Enabled = false,
 							Size = 24,

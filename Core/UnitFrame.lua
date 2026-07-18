@@ -1,9 +1,7 @@
 local _, UUF = ...
 local oUF = UUF.oUF
 local raidFrameIndex = 0
-local raidPartyFrameIndex = 0
 local raidStyleRegistered = false
-local raidPartyStyleRegistered = false
 
 local function ApplyScripts(unitFrame)
     unitFrame:RegisterForClicks("AnyUp")
@@ -11,16 +9,6 @@ local function ApplyScripts(unitFrame)
     unitFrame:SetAttribute("*type2", "togglemenu")
     unitFrame:HookScript("OnEnter", UnitFrame_OnEnter)
     unitFrame:HookScript("OnLeave", UnitFrame_OnLeave)
-end
-
-function UUF:RegisterRaidStylePartyStyle()
-	if raidPartyStyleRegistered then return end
-	oUF:RegisterStyle(UUF:FetchFrameName("raidparty"), function(unitFrame)
-		raidPartyFrameIndex = raidPartyFrameIndex + 1
-		unitFrame.isRaidStylePartyFrame = true
-		UUF:CreateUnitFrame(unitFrame, "raidparty" .. raidPartyFrameIndex)
-	end)
-	raidPartyStyleRegistered = true
 end
 
 function UUF:CreateUnitFrame(unitFrame, unit)
@@ -57,6 +45,7 @@ function UUF:CreateUnitFrame(unitFrame, unit)
     if isPlayer then UUF:CreateUnitTotems(unitFrame, unit) end
     if isTarget then UUF:CreateUnitClassificationIndicator(unitFrame, unit) end
     if isTarget then UUF:CreateUnitQuestIndicator(unitFrame, unit) end
+	UUF:CreateUnitAFKDNDIndicator(unitFrame, unit)
     UUF:CreateUnitMouseoverIndicator(unitFrame, unit)
     UUF:CreateUnitTargetGlowIndicator(unitFrame, unit)
     UUF:CreateUnitThreatIndicator(unitFrame, unit)
@@ -69,6 +58,7 @@ function UUF:CreateUnitFrame(unitFrame, unit)
 			if not value then
 				UUF:UnregisterRangeFrame(frame)
 				UUF:UnregisterTargetGlowIndicatorFrame(frame)
+				UUF:UnregisterAFKDNDIndicatorFrame(frame)
 				frame.UUFGroupUnit = nil
 				return
 			end
@@ -83,8 +73,10 @@ function UUF:CreateUnitFrame(unitFrame, unit)
 			end
 			if frame.Health then frame.Health:ForceUpdate() end
 			if frame.Tags then for configuredTag in pairs(RaidDB.Tags) do UUF:UpdateUnitTag(frame, value, configuredTag) end elseif frame.UpdateTags then frame:UpdateTags() end
+			UUF:UpdateUnitFrame(frame, value)
 			UUF:UpdateUnitPowerBar(frame, value)
 			UUF:UpdateUnitRoleIndicator(frame, value)
+			UUF:UpdateUnitAFKDNDIndicator(frame, value)
 		end)
 	end
     ApplyScripts(unitFrame)
@@ -112,12 +104,6 @@ end
 function UUF:SpawnUnitFrame(unit)
     local UnitDB = UUF.db.profile.Units[UUF:GetNormalizedUnit(unit)]
 	local augmentationEnabled = unit == "raid" and UUF.db.profile.Units.raid.augmentation.Enabled and UUF:IsAugmentationEvoker()
-	if unit == "party" and UUF:UseRaidStyleForParty() then
-		if UnitDB and UnitDB.ForceHideBlizzard then oUF:DisableBlizzard(unit) end
-		UUF:RegisterRaidStylePartyStyle()
-		oUF:SetActiveStyle(UUF:FetchFrameName("raidparty"))
-		return UUF:SpawnRaidStylePartyFrames()
-	end
 	if not UnitDB or (not UnitDB.Enabled and not augmentationEnabled) then
         if UnitDB and UnitDB.ForceHideBlizzard then
 			if unit == "raid" then UUF:HideBlizzardRaidFrames() else oUF:DisableBlizzard(unit) end
@@ -229,6 +215,7 @@ function UUF:UpdateUnitFrame(unitFrame, unit)
     if isPlayer then UUF:UpdateUnitTotems(unitFrame, unit) end
     if isTarget then UUF:UpdateUnitClassificationIndicator(unitFrame, unit) end
     if isTarget then UUF:UpdateUnitQuestIndicator(unitFrame, unit) end
+	UUF:UpdateUnitAFKDNDIndicator(unitFrame, unit)
     UUF:UpdateUnitMouseoverIndicator(unitFrame, unit)
     UUF:UpdateUnitTargetGlowIndicator(unitFrame, unit)
     UUF:UpdateUnitThreatIndicator(unitFrame, unit)
