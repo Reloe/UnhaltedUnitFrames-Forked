@@ -78,72 +78,6 @@ local function GetAuraDurationFormatter(DurationDB)
 	return formatter
 end
 
-local function ApplyAuraDurationText(button, DurationDB)
-	if button.SetDurationText and button.Time then
-		button:SetDurationText(button.Time, {
-			formatter = GetAuraDurationFormatter(DurationDB),
-			expiredText = "",
-			zeroDurationText = "",
-		})
-	end
-end
-
-local function CreateAuraButtonBorder(button)
-	local top = button:CreateTexture(nil, "OVERLAY", nil, 7)
-	top:SetColorTexture(0, 0, 0, 1)
-	top:SetPoint("TOPLEFT")
-	top:SetPoint("TOPRIGHT")
-	top:SetHeight(1)
-	local bottom = button:CreateTexture(nil, "OVERLAY", nil, 7)
-	bottom:SetColorTexture(0, 0, 0, 1)
-	bottom:SetPoint("BOTTOMLEFT")
-	bottom:SetPoint("BOTTOMRIGHT")
-	bottom:SetHeight(1)
-	local left = button:CreateTexture(nil, "OVERLAY", nil, 7)
-	left:SetColorTexture(0, 0, 0, 1)
-	left:SetPoint("TOPLEFT")
-	left:SetPoint("BOTTOMLEFT")
-	left:SetWidth(1)
-	local right = button:CreateTexture(nil, "OVERLAY", nil, 7)
-	right:SetColorTexture(0, 0, 0, 1)
-	right:SetPoint("TOPRIGHT")
-	right:SetPoint("BOTTOMRIGHT")
-	right:SetWidth(1)
-end
-
-local function ApplyAuraButtonStyle(button, unitFrame, unit, auraKey, size)
-	local AuraDB = GetAuraDB(unitFrame, unit, auraKey)
-	if not AuraDB then return end
-	button:SetSize(size, size)
-	button.Icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-	button.Cooldown:SetDrawEdge(false)
-	button.Cooldown:SetDrawBling(false)
-	button.Cooldown:SetReverse(true)
-	button.Cooldown:SetHideCountdownNumbers(true)
-	ApplyFontStyle(button.Count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour, unitFrame, unit)
-	button.Count:SetShown(not AuraDB.Count.HideStacks)
-
-	local CooldownTextDB = GetAuraDurationDB(unitFrame, unit, AuraDB)
-	local fontSize = CooldownTextDB.FontSize
-	if CooldownTextDB.ScaleByIconSize then fontSize = math.max(CooldownTextDB.FontSize * size / 36, 1) end
-	ApplyFontStyle(button.Time, button, CooldownTextDB.Layout, fontSize, CooldownTextDB.Colour, unitFrame, unit)
-	ApplyAuraDurationText(button, CooldownTextDB)
-	button.Time:SetShown(not CooldownTextDB.HideDuration)
-
-	button.Border:ClearAllPoints()
-	button.Border:SetPoint("TOPLEFT", button, "TOPLEFT", 1, -1)
-	button.Border:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
-	button:SetAuraBorder(button.Border, AuraBorderOptions[AuraDB.ShowType == true])
-end
-
-local function PostCreateAuraButton(container, button)
-	local state = AuraContainerState[container]
-	if not state then return end
-	state.Buttons[#state.Buttons + 1] = button
-	CreateAuraButtonBorder(button)
-	ApplyAuraButtonStyle(button, state.UnitFrame, state.Unit, state.AuraKey, state.Size)
-end
-
 local function AddAuraFilter(filters, auraType, source, token, exclusions)
 	local filter = auraType
 	if source then filter = filter .. "|" .. source end
@@ -205,7 +139,7 @@ local function CreateAuraContainer(unitFrame, unit, auraKey)
 	})
 	if not container then return end
 
-	local state = {Groups = {}, ActiveGroups = {}, ActiveSpellIDGroups = {}, Buttons = {}, Size = AuraDB and AuraDB.Size or 1, UnitFrame = unitFrame, Unit = unit, AuraKey = auraKey}
+	local state = {Groups = {}, ActiveGroups = {}, ActiveSpellIDGroups = {}, Size = AuraDB and AuraDB.Size or 1, UnitFrame = unitFrame, Unit = unit, AuraKey = auraKey}
 	AuraContainerState[container] = state
 	container.size = state.Size
 	container.showCount = true
@@ -214,7 +148,6 @@ local function CreateAuraContainer(unitFrame, unit, auraKey)
 	container.showDebuffBorder = true
 	container.borderStyle = AuraButtonBorderStyle.Color
 	container.durationFormatter = GetAuraDurationFormatter(AuraDB and GetAuraDurationDB(unitFrame, unit, AuraDB))
-	container.PostCreateButton = PostCreateAuraButton
 	return container
 end
 
@@ -232,8 +165,13 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	local candidateFilters = hasSpellIDs and {includeSpellIDs = AuraDB.SpellIDs} or nil
 	state.Size = AuraDB.Size
 	container.size = AuraDB.Size
-	container.durationFormatter = GetAuraDurationFormatter(GetAuraDurationDB(unitFrame, unit, AuraDB))
-	for _, button in ipairs(state.Buttons) do ApplyAuraButtonStyle(button, unitFrame, unit, auraKey, state.Size) end
+	local DurationDB = GetAuraDurationDB(unitFrame, unit, AuraDB)
+	container.showCount = not AuraDB.Count.HideStacks
+	container.showDuration = not DurationDB.HideDuration
+	container.showBuffBorder = AuraDB.ShowType == true
+	container.showDebuffBorder = AuraDB.ShowType == true
+	container.borderStyle = AuraButtonBorderStyle.Color
+	container.durationFormatter = GetAuraDurationFormatter(DurationDB)
 	local filters, playerTokens, otherTokens, showAllPlayer, showAllOthers = GetAuraFilters(AuraDB, auraType)
 	local hasAuraFilters = #filters > 0
 	local activeSpellIDGroups = {}
@@ -410,6 +348,29 @@ local function HideFakeAuras(container)
 	end
 end
 
+local function CreateFakeAuraButtonBorder(button)
+	local top = button:CreateTexture(nil, "OVERLAY", nil, 7)
+	top:SetColorTexture(0, 0, 0, 1)
+	top:SetPoint("TOPLEFT")
+	top:SetPoint("TOPRIGHT")
+	top:SetHeight(1)
+	local bottom = button:CreateTexture(nil, "OVERLAY", nil, 7)
+	bottom:SetColorTexture(0, 0, 0, 1)
+	bottom:SetPoint("BOTTOMLEFT")
+	bottom:SetPoint("BOTTOMRIGHT")
+	bottom:SetHeight(1)
+	local left = button:CreateTexture(nil, "OVERLAY", nil, 7)
+	left:SetColorTexture(0, 0, 0, 1)
+	left:SetPoint("TOPLEFT")
+	left:SetPoint("BOTTOMLEFT")
+	left:SetWidth(1)
+	local right = button:CreateTexture(nil, "OVERLAY", nil, 7)
+	right:SetColorTexture(0, 0, 0, 1)
+	right:SetPoint("TOPRIGHT")
+	right:SetPoint("BOTTOMRIGHT")
+	right:SetWidth(1)
+end
+
 local function UpdateFakeAuras(container, unitFrame, unit, AuraDB, texture)
 	if not container then return end
 	if not AuraDB then
@@ -440,7 +401,7 @@ local function UpdateFakeAuras(container, unitFrame, unit, AuraDB, texture)
 		local button = container["fake" .. index]
 		if not button then
 			button = CreateFrame("Button", nil, container)
-			CreateAuraButtonBorder(button)
+			CreateFakeAuraButtonBorder(button)
 			button.Icon = button:CreateTexture(nil, "BORDER")
 			button.Icon:SetPoint("TOPLEFT", button, "TOPLEFT", 1, -1)
 			button.Icon:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
