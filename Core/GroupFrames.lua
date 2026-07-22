@@ -73,7 +73,6 @@ function UUF:LayoutAugmentationRaidFrames()
 		if child then
 			child:ClearAllPoints()
 			child:SetSize(FrameDB.Width, FrameDB.Height)
-			child:SetFrameStrata(FrameDB.FrameStrata)
 		end
 	end
 	header:SetAttribute("point", point)
@@ -174,7 +173,6 @@ function UUF:UpdateAugmentationRaidFrames()
 			return
 		end
 		raidFrame:SetSize(AugmentationDB.Frame.Width, AugmentationDB.Frame.Height)
-		raidFrame:SetFrameStrata(AugmentationDB.Frame.FrameStrata)
 		UUF:UpdateUnitFrame(raidFrame, unit)
 		raidFrame.UUFGroupUnit = assignedUnit
 	end, true)
@@ -351,7 +349,6 @@ function UUF:UpdateGroupFrame(groupType)
 				return
 			end
 			raidFrame:SetSize(UnitDB.Frame.Width, UnitDB.Frame.Height)
-			raidFrame:SetFrameStrata(UnitDB.Frame.FrameStrata)
 			UUF:UpdateUnitFrame(raidFrame, unit)
 			if assignedUnit then
 				raidFrame.UUFGroupUnit = assignedUnit

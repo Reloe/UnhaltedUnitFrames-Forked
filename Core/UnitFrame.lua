@@ -216,8 +216,8 @@ function UUF:UpdateUnitFrame(unitFrame, unit)
     UUF:UpdateUnitAuras(unitFrame, unit)
 	if unit ~= "player" then UUF:RegisterRangeFrame(unitFrame, unit == "partyplayer" and "player" or unit) end
 	UUF:RegisterTargetGlowIndicatorFrame(unitFrame, unit)
-    unitFrame:SetFrameStrata(UnitDB.Frame.FrameStrata)
-    UUF:UpdateUnitContainerLayers(unitFrame)
+    if not isParty and not isRaid then unitFrame:SetFrameStrata(UnitDB.Frame.FrameStrata) end
+    UUF:UpdateUnitContainerLayers(unitFrame, frameUnit)
 end
 
 function UUF:UpdateBossFrames()

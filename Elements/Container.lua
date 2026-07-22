@@ -1,10 +1,13 @@
 local _, UUF = ...
 
-function UUF:UpdateUnitContainerLayers(unitFrame)
+function UUF:UpdateUnitContainerLayers(unitFrame, unit)
     if not unitFrame or not unitFrame.Container or not unitFrame.HighLevelContainer then return end
-    unitFrame.Container:SetFrameStrata(unitFrame:GetFrameStrata())
+    local frameUnit = unit or unitFrame.UUFConfiguredUnit or unitFrame.unit
+    local normalizedUnit = frameUnit and UUF:GetNormalizedUnit(frameUnit)
+    local isGroupFrame = normalizedUnit == "party" or normalizedUnit == "raid"
+    if not isGroupFrame then unitFrame.Container:SetFrameStrata(unitFrame:GetFrameStrata()) end
     unitFrame.Container:SetFrameLevel(unitFrame:GetFrameLevel())
-    unitFrame.HighLevelContainer:SetFrameStrata(unitFrame:GetFrameStrata())
+    if not isGroupFrame then unitFrame.HighLevelContainer:SetFrameStrata(unitFrame:GetFrameStrata()) end
     unitFrame.HighLevelContainer:SetFrameLevel(unitFrame:GetFrameLevel() + 50)
 end
 
@@ -22,5 +25,5 @@ function UUF:CreateUnitContainer(unitFrame, unit)
             unitFrame.HighLevelContainer:SetPoint("BOTTOMRIGHT", unitFrame, "BOTTOMRIGHT", 0, 0)
         end
     end
-    UUF:UpdateUnitContainerLayers(unitFrame)
+    UUF:UpdateUnitContainerLayers(unitFrame, unit)
 end
