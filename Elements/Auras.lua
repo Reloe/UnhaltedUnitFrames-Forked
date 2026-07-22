@@ -43,6 +43,12 @@ local function ApplyFontStyle(fontString, anchorFrame, layout, fontSize, colour,
 	end
 end
 
+local function GetAuraDurationFontSize(DurationDB, AuraDB)
+	local fontSize = DurationDB.FontSize
+	if DurationDB.ScaleByIconSize then fontSize = math.max(DurationDB.FontSize * AuraDB.Size / 36, 1) end
+	return fontSize
+end
+
 local function GetAuraDurationDB(unitFrame, unit, AuraDB)
 	if AuraDB.Duration then return AuraDB.Duration end
 	local CooldownTextDB = UUF.db.profile.General.CooldownText
@@ -78,10 +84,24 @@ local function GetAuraDurationFormatter(DurationDB)
 	return formatter
 end
 
+local function ApplyAuraButtonTextStyle(container, button, unitFrame, unit, AuraDB, DurationDB)
+	if button.Count then
+		ApplyFontStyle(button.Count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour, unitFrame, unit)
+		button.Count:SetShown(not AuraDB.Count.HideStacks)
+	end
+	if button.Duration then
+		ApplyFontStyle(button.Duration, button, DurationDB.Layout, GetAuraDurationFontSize(DurationDB, AuraDB), DurationDB.Colour, unitFrame, unit)
+		button.Duration:SetShown(not DurationDB.HideDuration)
+	end
+	if button.Cooldown then button.Cooldown:SetHideCountdownNumbers(true) end
+end
+
 local function CreateAuraButton(container, button)
 	local size = container.size or 16
 	button:SetSize(size, size)
 	button:EnableMouse(true)
+	container.buttons = container.buttons or {}
+	container.buttons[button] = true
 
 	local cooldown = CreateFrame("Cooldown", "$parentCooldown", button, "CooldownFrameTemplate")
 	cooldown:SetAllPoints()
@@ -89,7 +109,7 @@ local function CreateAuraButton(container, button)
 	cooldown:SetDrawEdge(false)
 	cooldown:SetDrawBling(false)
 	cooldown:SetReverse(container.inverseCooldownSwipe == true)
-	cooldown:SetHideCountdownNumbers(not container.showDuration)
+	cooldown:SetHideCountdownNumbers(true)
 	button.Cooldown = cooldown
 	button:SetDurationCooldown(cooldown)
 
@@ -100,7 +120,7 @@ local function CreateAuraButton(container, button)
 	button:SetIcon(icon)
 
 	local textParent
-	if container.showCount then
+	if container.showCount or container.showDuration then
 		textParent = CreateFrame("Frame", nil, button)
 		textParent:SetAllPoints()
 		textParent:SetFrameLevel(cooldown:GetFrameLevel() + 1)
@@ -112,6 +132,14 @@ local function CreateAuraButton(container, button)
 		button.Count = count
 		button:SetApplicationCount(count, {
 			formatter = container.countFormatter,
+		})
+	end
+
+	if container.showDuration then
+		local duration = textParent:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+		button.Duration = duration
+		button:SetDurationText(duration, {
+			formatter = container.durationFormatter,
 		})
 	end
 
@@ -129,6 +157,13 @@ local function CreateAuraButton(container, button)
 
 	if container.cancelButton then
 		button:SetCancelAuraButtons(container.cancelButton)
+	end
+end
+
+local function ApplyAuraContainerTextStyle(container, unitFrame, unit, AuraDB, DurationDB)
+	if not container.buttons then return end
+	for button in pairs(container.buttons) do
+		ApplyAuraButtonTextStyle(container, button, unitFrame, unit, AuraDB, DurationDB)
 	end
 end
 
@@ -230,6 +265,7 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	container.showDebuffBorder = AuraDB.ShowType == true
 	container.borderStyle = AuraButtonBorderStyle.Color
 	container.durationFormatter = GetAuraDurationFormatter(DurationDB)
+	ApplyAuraContainerTextStyle(container, unitFrame, unit, AuraDB, DurationDB)
 	local filters, playerTokens, otherTokens, showAllPlayer, showAllOthers = GetAuraFilters(AuraDB, auraType)
 	local hasAuraFilters = #filters > 0
 	local activeSpellIDGroups = {}
@@ -280,6 +316,7 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 		container:SetAuraGroupLayout(groupKey, layout)
 		container:SetAuraGroupSortMethod(groupKey, sortMethod, sortDirection)
 	end
+	ApplyAuraContainerTextStyle(container, unitFrame, unit, AuraDB, DurationDB)
 	state.ActiveGroups = activeGroups
 	state.ActiveSpellIDGroups = activeSpellIDGroups
 
@@ -481,9 +518,7 @@ local function UpdateFakeAuras(container, unitFrame, unit, AuraDB, texture)
 		button.Count:SetText(index)
 		button.Count:SetShown(not AuraDB.Count.HideStacks)
 		local CooldownTextDB = GetAuraDurationDB(unitFrame, unit, AuraDB)
-		local fontSize = CooldownTextDB.FontSize
-		if CooldownTextDB.ScaleByIconSize then fontSize = math.max(CooldownTextDB.FontSize * AuraDB.Size / 36, 1) end
-		ApplyFontStyle(button.Duration, button, CooldownTextDB.Layout, fontSize, CooldownTextDB.Colour, unitFrame, unit)
+		ApplyFontStyle(button.Duration, button, CooldownTextDB.Layout, GetAuraDurationFontSize(CooldownTextDB, AuraDB), CooldownTextDB.Colour, unitFrame, unit)
 		button.Duration:SetText("10m")
 		button.Duration:SetShown(not CooldownTextDB.HideDuration)
 		button:Show()
