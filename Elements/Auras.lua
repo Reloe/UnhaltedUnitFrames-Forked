@@ -78,6 +78,60 @@ local function GetAuraDurationFormatter(DurationDB)
 	return formatter
 end
 
+local function CreateAuraButton(container, button)
+	local size = container.size or 16
+	button:SetSize(size, size)
+	button:EnableMouse(true)
+
+	local cooldown = CreateFrame("Cooldown", "$parentCooldown", button, "CooldownFrameTemplate")
+	cooldown:SetAllPoints()
+	cooldown:SetDrawSwipe(container.showCooldownSwipe ~= false)
+	cooldown:SetDrawEdge(false)
+	cooldown:SetDrawBling(false)
+	cooldown:SetReverse(container.inverseCooldownSwipe == true)
+	cooldown:SetHideCountdownNumbers(not container.showDuration)
+	button.Cooldown = cooldown
+	button:SetDurationCooldown(cooldown)
+
+	local icon = button:CreateTexture(nil, "BORDER")
+	icon:SetAllPoints()
+	icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+	button.Icon = icon
+	button:SetIcon(icon)
+
+	local textParent
+	if container.showCount then
+		textParent = CreateFrame("Frame", nil, button)
+		textParent:SetAllPoints()
+		textParent:SetFrameLevel(cooldown:GetFrameLevel() + 1)
+	end
+
+	if container.showCount then
+		local count = textParent:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+		count:SetPoint("BOTTOMRIGHT", -1, 0)
+		button.Count = count
+		button:SetApplicationCount(count, {
+			formatter = container.countFormatter,
+		})
+	end
+
+	if container.showBuffBorder or container.showDebuffBorder then
+		local border = button:CreateTexture(nil, "OVERLAY")
+		border:SetAllPoints()
+		button.Border = border
+		button:SetAuraBorder(border, {
+			showIcon = container.showBorderSymbol,
+			showWhenHarmful = container.showDebuffBorder,
+			showWhenHelpful = container.showBuffBorder,
+			style = container.borderStyle,
+		})
+	end
+
+	if container.cancelButton then
+		button:SetCancelAuraButtons(container.cancelButton)
+	end
+end
+
 local function AddAuraFilter(filters, auraType, source, token, exclusions)
 	local filter = auraType
 	if source then filter = filter .. "|" .. source end
@@ -144,6 +198,8 @@ local function CreateAuraContainer(unitFrame, unit, auraKey)
 	container.size = state.Size
 	container.showCount = true
 	container.showDuration = true
+	container.showCooldownSwipe = true
+	container.inverseCooldownSwipe = true
 	container.showBuffBorder = true
 	container.showDebuffBorder = true
 	container.borderStyle = AuraButtonBorderStyle.Color
@@ -168,6 +224,8 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	local DurationDB = GetAuraDurationDB(unitFrame, unit, AuraDB)
 	container.showCount = not AuraDB.Count.HideStacks
 	container.showDuration = not DurationDB.HideDuration
+	container.showCooldownSwipe = DurationDB.ShowCooldownSwipe ~= false
+	container.inverseCooldownSwipe = DurationDB.InverseCooldownSwipe == true
 	container.showBuffBorder = AuraDB.ShowType == true
 	container.showDebuffBorder = AuraDB.ShowType == true
 	container.borderStyle = AuraButtonBorderStyle.Color
@@ -213,6 +271,7 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 				layout = layout,
 				sortMethod = sortMethod,
 				sortDirection = sortDirection,
+				initializeFrame = GenerateClosure(CreateAuraButton, container),
 			})
 			state.Groups[filter] = groupKey
 		end

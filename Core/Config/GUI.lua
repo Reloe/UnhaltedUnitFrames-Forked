@@ -3604,6 +3604,8 @@ local function EnsureAuraContainerDurationDB(unit, AuraDB)
 	if AuraDB.Duration then
 		if AuraDB.Duration.ShowDecimalSeconds == nil then AuraDB.Duration.ShowDecimalSeconds = AuraDB.Duration.ShowDecimalsUnderThree or false end
 		if AuraDB.Duration.DecimalThreshold == nil then AuraDB.Duration.DecimalThreshold = 3 end
+		if AuraDB.Duration.ShowCooldownSwipe == nil then AuraDB.Duration.ShowCooldownSwipe = true end
+		if AuraDB.Duration.InverseCooldownSwipe == nil then AuraDB.Duration.InverseCooldownSwipe = false end
 		return AuraDB.Duration
 	end
 	local SourceDB = UUF.db.profile.General.CooldownText
@@ -3615,6 +3617,8 @@ local function EnsureAuraContainerDurationDB(unit, AuraDB)
 		ScaleByIconSize = SourceDB.ScaleByIconSize,
 		ShowDecimalSeconds = false,
 		DecimalThreshold = 3,
+		ShowCooldownSwipe = true,
+		InverseCooldownSwipe = true,
 	}
 	if SourceDB.Colour then AuraDB.Duration.Colour = {SourceDB.Colour[1], SourceDB.Colour[2], SourceDB.Colour[3], SourceDB.Colour[4]} end
 	return AuraDB.Duration
@@ -3947,10 +3951,12 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     local HideDurationToggle = AG:Create("CheckBox")
 	local FontSizeSlider
 	local DecimalThresholdSlider
+	local ShowSwipeToggle
+	local InverseSwipeToggle
     HideDurationToggle:SetLabel("Hide Duration")
     HideDurationToggle:SetValue(DurationDB.HideDuration or false)
     HideDurationToggle:SetRelativeWidth(0.5)
-    HideDurationToggle:SetCallback("OnValueChanged", function(_, _, value) DurationDB.HideDuration = value UpdateAuras() GUIWidgets.DeepDisable(DurationContainer, value, HideDurationToggle) FontSizeSlider:SetDisabled(value or DurationDB.ScaleByIconSize) DecimalThresholdSlider:SetDisabled(value or not (DurationDB.ShowDecimalSeconds or DurationDB.ShowDecimalsUnderThree)) end)
+    HideDurationToggle:SetCallback("OnValueChanged", function(_, _, value) DurationDB.HideDuration = value UpdateAuras() GUIWidgets.DeepDisable(DurationContainer, value, HideDurationToggle) FontSizeSlider:SetDisabled(value or DurationDB.ScaleByIconSize) DecimalThresholdSlider:SetDisabled(value or not (DurationDB.ShowDecimalSeconds or DurationDB.ShowDecimalsUnderThree)) ShowSwipeToggle:SetDisabled(false) InverseSwipeToggle:SetDisabled(false) end)
     DurationContainer:AddChild(HideDurationToggle)
 
     local DurationAnchorFromDropdown = AG:Create("Dropdown")
@@ -4017,9 +4023,29 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     DurationContainer:AddChild(ShowDecimalsCheckbox)
     DurationContainer:AddChild(DecimalThresholdSlider)
 
+    ShowSwipeToggle = AG:Create("CheckBox")
+    ShowSwipeToggle:SetLabel("Show Cooldown Swipe")
+    ShowSwipeToggle:SetValue(DurationDB.ShowCooldownSwipe ~= false)
+    ShowSwipeToggle:SetRelativeWidth(0.5)
+    ShowSwipeToggle:SetCallback("OnValueChanged", function(_, _, value) DurationDB.ShowCooldownSwipe = value reloadRequired = true UpdateAuras() end)
+    ShowSwipeToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(ShowSwipeToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine("Shows the radial cooldown swipe on this aura container's icons. Reloading the UI may be required for active aura buttons.", 1, 1, 1, true) GameTooltip:Show() end)
+    ShowSwipeToggle:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+    DurationContainer:AddChild(ShowSwipeToggle)
+
+    InverseSwipeToggle = AG:Create("CheckBox")
+    InverseSwipeToggle:SetLabel("Inverse Cooldown Swipe")
+    InverseSwipeToggle:SetValue(DurationDB.InverseCooldownSwipe == true)
+    InverseSwipeToggle:SetRelativeWidth(0.5)
+    InverseSwipeToggle:SetCallback("OnValueChanged", function(_, _, value) DurationDB.InverseCooldownSwipe = value reloadRequired = true UpdateAuras() end)
+    InverseSwipeToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(InverseSwipeToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine("Inverts the radial cooldown swipe direction on this aura container's icons. Reloading the UI may be required for active aura buttons.", 1, 1, 1, true) GameTooltip:Show() end)
+    InverseSwipeToggle:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+    DurationContainer:AddChild(InverseSwipeToggle)
+
 	GUIWidgets.DeepDisable(DurationContainer, DurationDB.HideDuration, HideDurationToggle)
 	FontSizeSlider:SetDisabled(DurationDB.HideDuration or DurationDB.ScaleByIconSize)
 	DecimalThresholdSlider:SetDisabled(DurationDB.HideDuration or not (DurationDB.ShowDecimalSeconds or DurationDB.ShowDecimalsUnderThree))
+	ShowSwipeToggle:SetDisabled(false)
+	InverseSwipeToggle:SetDisabled(false)
 	end
 
     containerParent:DoLayout()
