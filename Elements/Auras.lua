@@ -340,6 +340,9 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 		elementHeight = state.Size,
 		elementSpacingX = AuraDB.Layout[5],
 		elementSpacingY = AuraDB.Layout[5],
+		gapX = 0,
+		gapY = 0,
+		forceNewRow = false,
 	}
 	local reverse = AuraDB.Sorting == "BLIZZARD_REVERSED" or AuraDB.Sorting == "DURATION_REVERSED"
 	local sortMethod = (AuraDB.Sorting == "DURATION" or AuraDB.Sorting == "DURATION_REVERSED") and AuraContainerSortMethod.ExpirationOnly or AuraContainerSortMethod.Default
@@ -368,7 +371,8 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	state.ActiveGroups = activeGroups
 	state.ActiveSpellIDGroups = activeSpellIDGroups
 
-	local width = math.max((state.Size + AuraDB.Layout[5]) * AuraDB.Wrap - AuraDB.Layout[5], 1)
+	local columns = math.min(AuraDB.Num, AuraDB.Wrap)
+	local width = math.max((state.Size + AuraDB.Layout[5]) * columns - AuraDB.Layout[5], 1)
 	local rows = math.max(math.ceil(AuraDB.Num / AuraDB.Wrap), 1)
 	local height = math.max((state.Size + AuraDB.Layout[5]) * rows - AuraDB.Layout[5], 1)
 	local anchorParent = AuraDB.AnchorParent == "Health" and unitFrame.Health or unitFrame
