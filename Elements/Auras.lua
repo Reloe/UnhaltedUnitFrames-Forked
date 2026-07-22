@@ -54,6 +54,12 @@ local function GetAuraDurationDB(unitFrame, unit, AuraDB)
 	return CooldownTextDB
 end
 
+local function ColouriseBreakpointFormat(breakpoint)
+	if not breakpoint.format or not breakpoint.color then return end
+	if breakpoint.format:find("|c", 1, true) then return end
+	breakpoint.format = CreateColor(breakpoint.color[1], breakpoint.color[2], breakpoint.color[3], breakpoint.color[4] or 1):WrapTextInColorCode(breakpoint.format)
+end
+
 local function GetAuraDurationFormatter(DurationDB)
 	local decimalThreshold = 0
 	if DurationDB then
@@ -71,6 +77,7 @@ local function GetAuraDurationFormatter(DurationDB)
 			for key, value in pairs(breakpoint) do breakpointCopy[key] = value end
 			if breakpointCopy.displayStyle == "decimalSeconds" then
 				breakpointCopy.threshold = 0
+				ColouriseBreakpointFormat(breakpointCopy)
 			elseif breakpointCopy.displayStyle == "secondsOnly" then
 				breakpointCopy.threshold = decimalThreshold > 0 and decimalThreshold or 0
 				breakpointCopy.min = 1
