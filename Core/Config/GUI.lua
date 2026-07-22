@@ -4632,20 +4632,26 @@ local function CreateTagSettings(containerParent)
 
     local function SelectedGroup(TagContainer, _, TagGroup)
         TagContainer:ReleaseChildren()
+        local ScrollFrame = GUIWidgets.CreateScrollFrame(TagContainer)
+        ScrollFrame:SetFullHeight(true)
         if TagGroup == "Health" then
-            DrawTagContainer(TagContainer, "Health")
+            DrawTagContainer(ScrollFrame, "Health")
         elseif TagGroup == "Name" then
-            DrawTagContainer(TagContainer, "Name")
+            DrawTagContainer(ScrollFrame, "Name")
         elseif TagGroup == "Power" then
-            DrawTagContainer(TagContainer, "Power")
+            DrawTagContainer(ScrollFrame, "Power")
         elseif TagGroup == "Misc" then
-            DrawTagContainer(TagContainer, "Misc")
+            DrawTagContainer(ScrollFrame, "Misc")
         end
+        ScrollFrame:DoLayout()
         TagContainer:DoLayout()
     end
 
     local GUIContainerTabGroup = AG:Create("TabGroup")
-    GUIContainerTabGroup:SetLayout("Flow")
+    GUIContainerTabGroup:SetLayout("Fill")
+    GUIContainerTabGroup:SetFullWidth(true)
+    GUIContainerTabGroup:SetFullHeight(true)
+    GUIContainerTabGroup:SetAutoAdjustHeight(false)
     GUIContainerTabGroup:SetTabs({
         { text = "Health", value = "Health" },
         { text = "Name", value = "Name" },
@@ -4654,7 +4660,6 @@ local function CreateTagSettings(containerParent)
     })
     GUIContainerTabGroup:SetCallback("OnGroupSelected", SelectedGroup)
     GUIContainerTabGroup:SelectTab("Health")
-    GUIContainerTabGroup:SetFullWidth(true)
     containerParent:AddChild(GUIContainerTabGroup)
     containerParent:DoLayout()
 end
@@ -5048,9 +5053,7 @@ function UUF:CreateGUI()
 
             ScrollFrame:DoLayout()
         elseif MainTab == "Tags" then
-            local ScrollFrame = GUIWidgets.CreateScrollFrame(Wrapper)
-            CreateTagSettings(ScrollFrame)
-            ScrollFrame:DoLayout()
+            CreateTagSettings(Wrapper)
         elseif MainTab == "Profiles" then
             local ScrollFrame = GUIWidgets.CreateScrollFrame(Wrapper)
 
