@@ -221,7 +221,7 @@ end
 
 oUF.Tags.Methods["perhp"] = function(unit)
     if not unit or not UnitExists(unit) then return "" end
-    local unitHealthPercent = UnitHealthPercent(unit, false, CurveConstants.ScaleTo100)
+    local unitHealthPercent = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
     local unitStatus = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and "Ghost" or not UnitIsConnected(unit) and "Offline"
     if unitStatus then
         return unitStatus
@@ -232,7 +232,7 @@ end
 
 oUF.Tags.Methods["perhp-with-sign"] = function(unit)
     if not unit or not UnitExists(unit) then return "" end
-    local unitHealthPercent = UnitHealthPercent(unit, false, CurveConstants.ScaleTo100)
+    local unitHealthPercent = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
     local unitStatus = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and "Ghost" or not UnitIsConnected(unit) and "Offline"
     if unitStatus then
         return unitStatus
@@ -245,7 +245,7 @@ for i = 1, 3 do
     local precision = i
     oUF.Tags.Methods["perhp-with-sign" .. ":" .. precision] = function(unit)
         if not unit or not UnitExists(unit) then return "" end
-        local unitHealthPercent = UnitHealthPercent(unit, false, CurveConstants.ScaleTo100)
+        local unitHealthPercent = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
         return string.format("%." .. precision .. "f%%", unitHealthPercent)
     end
 end
@@ -265,7 +265,7 @@ oUF.Tags.Methods["curhpperhp"] = function(unit)
     if not unit or not UnitExists(unit) then return "" end
     local unitHealth = UnitHealth(unit)
     local unitMaxHealth = UnitHealthMax(unit)
-    local unitHealthPercent = UnitHealthPercent(unit, false, CurveConstants.ScaleTo100)
+    local unitHealthPercent = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
     local unitStatus = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and "Ghost" or not UnitIsConnected(unit) and "Offline"
     if unitStatus then
         return unitStatus
@@ -286,7 +286,7 @@ oUF.Tags.Methods["curhpperhp:abbr"] = function(unit)
     if not unit or not UnitExists(unit) then return "" end
     local unitHealth = UnitHealth(unit)
     local unitMaxHealth = UnitHealthMax(unit)
-    local unitHealthPercent = UnitHealthPercent(unit, false, CurveConstants.ScaleTo100)
+    local unitHealthPercent = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
     local unitStatus = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and "Ghost" or not UnitIsConnected(unit) and "Offline"
     if unitStatus then
         return unitStatus
@@ -576,20 +576,20 @@ for i = 1, 3 do
 
     oUF.Tags.Methods["perhp" .. ":" .. precision] = function(unit)
         if not unit or not UnitExists(unit) then return "" end
-        local unitHealthPercent = UnitHealthPercent(unit, false, CurveConstants.ScaleTo100)
+        local unitHealthPercent = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
         return string.format("%." .. precision .. "f", unitHealthPercent)
     end
 
     oUF.Tags.Methods["perhp-with-sign" .. ":" .. precision] = function(unit)
         if not unit or not UnitExists(unit) then return "" end
-        local unitHealthPercent = UnitHealthPercent(unit, false, CurveConstants.ScaleTo100)
+        local unitHealthPercent = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
         return string.format("%." .. precision .. "f%%", unitHealthPercent)
     end
 
     oUF.Tags.Methods["curhpperhp" .. ":" .. precision] = function(unit)
         if not unit or not UnitExists(unit) then return "" end
         local unitHealth = UnitHealth(unit)
-        local unitHealthPercent = UnitHealthPercent(unit, false, CurveConstants.ScaleTo100)
+        local unitHealthPercent = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
         if UUF.SEPARATOR == "[]" then
             return string.format("%s [%." .. precision .. "f%%]", unitHealth, unitHealthPercent)
         elseif UUF.SEPARATOR == "()" then
@@ -604,7 +604,7 @@ for i = 1, 3 do
     oUF.Tags.Methods["curhpperhp:abbr" .. ":" .. precision] = function(unit)
         if not unit or not UnitExists(unit) then return "" end
         local unitHealth = UnitHealth(unit)
-        local unitHealthPercent = UnitHealthPercent(unit, false, CurveConstants.ScaleTo100)
+        local unitHealthPercent = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
         if UUF.SEPARATOR == "[]" then
             return string.format("%s [%." .. precision .. "f%%]", AbbreviateValue(unitHealth), unitHealthPercent)
         elseif UUF.SEPARATOR == "()" then
