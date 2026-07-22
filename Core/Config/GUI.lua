@@ -531,6 +531,8 @@ end
 
 local function CreateTextureSettings(containerParent)
     local Container = GUIWidgets.CreateInlineGroup(containerParent, "Textures")
+	local PlayerDB = UUF.db.profile.Units.player
+	local MouseoverOpacity = PlayerDB.Indicators.Mouseover and PlayerDB.Indicators.Mouseover.HighlightOpacity or 0.8
 
     GUIWidgets.CreateInformationTag(Container,"Textures are applied to Unit Frames & Elements where appropriate. Party and Raid Frames can use their own texture pair. More textures can be added via |cFF8080FFSharedMedia|r.")
 
@@ -578,7 +580,7 @@ local function CreateTextureSettings(containerParent)
 
     local MouseoverHighlightSlider = AG:Create("Slider")
     MouseoverHighlightSlider:SetLabel("Highlight Opacity")
-    MouseoverHighlightSlider:SetValue(0.8)
+    MouseoverHighlightSlider:SetValue(MouseoverOpacity)
     MouseoverHighlightSlider:SetSliderValues(0.0, 1.0, 0.01)
     MouseoverHighlightSlider:SetRelativeWidth(0.5)
     MouseoverHighlightSlider:SetIsPercent(true)
@@ -595,7 +597,7 @@ local function CreateTextureSettings(containerParent)
 
     local ForegroundOpacitySlider = AG:Create("Slider")
     ForegroundOpacitySlider:SetLabel("Foreground Opacity")
-    ForegroundOpacitySlider:SetValue(0.8)
+    ForegroundOpacitySlider:SetValue(PlayerDB.HealthBar.ForegroundOpacity)
     ForegroundOpacitySlider:SetSliderValues(0.0, 1.0, 0.01)
     ForegroundOpacitySlider:SetRelativeWidth(0.5)
     ForegroundOpacitySlider:SetIsPercent(true)
@@ -612,7 +614,7 @@ local function CreateTextureSettings(containerParent)
 
     local BackgroundOpacitySlider = AG:Create("Slider")
     BackgroundOpacitySlider:SetLabel("Background Opacity")
-    BackgroundOpacitySlider:SetValue(0.8)
+    BackgroundOpacitySlider:SetValue(PlayerDB.HealthBar.BackgroundOpacity)
     BackgroundOpacitySlider:SetSliderValues(0.0, 1.0, 0.01)
     BackgroundOpacitySlider:SetRelativeWidth(0.5)
     BackgroundOpacitySlider:SetIsPercent(true)
