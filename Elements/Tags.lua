@@ -1,5 +1,23 @@
 local _, UUF = ...
 
+local HealthTagTokens = {
+	"curhp",
+	"perhp",
+	"maxhp",
+	"missinghp",
+	"dead",
+	"status",
+	"offline",
+}
+
+local function TagUsesHealth(tagString)
+	if not tagString or tagString == "" then return false end
+	for _, token in ipairs(HealthTagTokens) do
+		if string.find(tagString, token, 1, true) then return true end
+	end
+	return false
+end
+
 local function CreateUnitTag(unitFrame, unit, tagDB)
 	local TagDB = UUF:GetUnitDB(unitFrame, unit).Tags[tagDB]
 	local FontsDB = UUF:GetFontSettings(unitFrame, unit)
@@ -80,6 +98,15 @@ function UUF:CreateUnitTags(unitFrame, unit)
     for tagName, _ in pairs(UUF:GetUnitDB(unitFrame, unit).Tags) do
         CreateUnitTag(unitFrame, unit, tagName)
     end
+end
+
+function UUF:UpdateUnitHealthTags(unitFrame)
+	if not unitFrame or not unitFrame.Tags then return end
+	for _, fontString in pairs(unitFrame.Tags) do
+		if fontString.UpdateTag and fontString:IsVisible() and TagUsesHealth(fontString.UUFTagString) then
+			fontString:UpdateTag()
+		end
+	end
 end
 
 function UUF:UpdateUnitTags(unit, tagName)
