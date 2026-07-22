@@ -3605,6 +3605,7 @@ end
 local function EnsureAuraContainerDurationDB(unit, AuraDB)
 	if AuraDB.Duration then
 		if AuraDB.Duration.ShowDecimalSeconds == nil then AuraDB.Duration.ShowDecimalSeconds = AuraDB.Duration.ShowDecimalsUnderThree or false end
+		AuraDB.Duration.ShowDecimalsUnderThree = nil
 		if AuraDB.Duration.DecimalThreshold == nil then AuraDB.Duration.DecimalThreshold = 3 end
 		if AuraDB.Duration.ShowCooldownSwipe == nil then AuraDB.Duration.ShowCooldownSwipe = true end
 		if AuraDB.Duration.InverseCooldownSwipe == nil then AuraDB.Duration.InverseCooldownSwipe = false end
@@ -3628,6 +3629,7 @@ end
 
 local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refreshSettings, refreshTree)
     local AuraDB = GetUnitDB(unit).Auras.Containers[auraKey]
+	if AuraDB.Border == nil then AuraDB.Border = true end
     local auraTitle = AuraDB.Type
     local function UpdateAuras()
         UpdateUnitSettings(unit, function() UUF:UpdateUnitAuras(UUF[unit:upper()], unit) end, "Auras")
@@ -3653,6 +3655,13 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     ShowTypeCheckbox:SetCallback("OnValueChanged", function(_, _, value) AuraDB.ShowType = value UpdateAuras() end)
     ShowTypeCheckbox:SetRelativeWidth(0.5)
     AuraContainer:AddChild(ShowTypeCheckbox)
+
+    local BorderCheckbox = AG:Create("CheckBox")
+    BorderCheckbox:SetLabel("1px Black Border")
+    BorderCheckbox:SetValue(AuraDB.Border ~= false)
+    BorderCheckbox:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Border = value UpdateAuras() end)
+    BorderCheckbox:SetRelativeWidth(0.5)
+    AuraContainer:AddChild(BorderCheckbox)
 
 	local selectedSettingsTab = GetSavedSubTab(unit, "AuraContainerSettings", "Layout")
 	local SettingsTabs = AG:Create("TabGroup")
@@ -3941,6 +3950,9 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     local DurationDB = EnsureAuraContainerDurationDB(unit, AuraDB)
     local DurationContainer = GUIWidgets.CreateInlineGroup(SettingsTabs, "Duration Settings")
 	local durationColour = DurationDB.Colour or {1, 1, 1, 1}
+	local function UsesDecimalSeconds()
+		return DurationDB.ShowDecimalSeconds == true
+	end
 
     local ColourPicker = AG:Create("ColorPicker")
     ColourPicker:SetLabel("Colour")
@@ -3958,7 +3970,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     HideDurationToggle:SetLabel("Hide Duration")
     HideDurationToggle:SetValue(DurationDB.HideDuration or false)
     HideDurationToggle:SetRelativeWidth(0.5)
-    HideDurationToggle:SetCallback("OnValueChanged", function(_, _, value) DurationDB.HideDuration = value UpdateAuras() GUIWidgets.DeepDisable(DurationContainer, value, HideDurationToggle) FontSizeSlider:SetDisabled(value or DurationDB.ScaleByIconSize) DecimalThresholdSlider:SetDisabled(value or not (DurationDB.ShowDecimalSeconds or DurationDB.ShowDecimalsUnderThree)) ShowSwipeToggle:SetDisabled(false) InverseSwipeToggle:SetDisabled(false) end)
+    HideDurationToggle:SetCallback("OnValueChanged", function(_, _, value) DurationDB.HideDuration = value UpdateAuras() GUIWidgets.DeepDisable(DurationContainer, value, HideDurationToggle) FontSizeSlider:SetDisabled(value or DurationDB.ScaleByIconSize) DecimalThresholdSlider:SetDisabled(value or not UsesDecimalSeconds()) ShowSwipeToggle:SetDisabled(false) InverseSwipeToggle:SetDisabled(false) end)
     DurationContainer:AddChild(HideDurationToggle)
 
     local DurationAnchorFromDropdown = AG:Create("Dropdown")
@@ -4015,13 +4027,13 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     DecimalThresholdSlider:SetSliderValues(0.1, 10, 0.1)
     DecimalThresholdSlider:SetRelativeWidth(0.5)
     DecimalThresholdSlider:SetCallback("OnValueChanged", function(_, _, value) DurationDB.DecimalThreshold = value UpdateAuras() end)
-    DecimalThresholdSlider:SetDisabled(not (DurationDB.ShowDecimalSeconds or DurationDB.ShowDecimalsUnderThree))
+    DecimalThresholdSlider:SetDisabled(not UsesDecimalSeconds())
 
     local ShowDecimalsCheckbox = AG:Create("CheckBox")
     ShowDecimalsCheckbox:SetLabel("Show Decimal Seconds")
-    ShowDecimalsCheckbox:SetValue(DurationDB.ShowDecimalSeconds or DurationDB.ShowDecimalsUnderThree or false)
+    ShowDecimalsCheckbox:SetValue(UsesDecimalSeconds())
     ShowDecimalsCheckbox:SetRelativeWidth(0.5)
-    ShowDecimalsCheckbox:SetCallback("OnValueChanged", function(_, _, value) DurationDB.ShowDecimalSeconds = value DecimalThresholdSlider:SetDisabled(DurationDB.HideDuration or not value) UpdateAuras() end)
+    ShowDecimalsCheckbox:SetCallback("OnValueChanged", function(_, _, value) DurationDB.ShowDecimalSeconds = value DurationDB.ShowDecimalsUnderThree = nil DecimalThresholdSlider:SetDisabled(DurationDB.HideDuration or not value) UpdateAuras() end)
     DurationContainer:AddChild(ShowDecimalsCheckbox)
     DurationContainer:AddChild(DecimalThresholdSlider)
 
@@ -4045,7 +4057,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
 
 	GUIWidgets.DeepDisable(DurationContainer, DurationDB.HideDuration, HideDurationToggle)
 	FontSizeSlider:SetDisabled(DurationDB.HideDuration or DurationDB.ScaleByIconSize)
-	DecimalThresholdSlider:SetDisabled(DurationDB.HideDuration or not (DurationDB.ShowDecimalSeconds or DurationDB.ShowDecimalsUnderThree))
+	DecimalThresholdSlider:SetDisabled(DurationDB.HideDuration or not UsesDecimalSeconds())
 	ShowSwipeToggle:SetDisabled(false)
 	InverseSwipeToggle:SetDisabled(false)
 	end

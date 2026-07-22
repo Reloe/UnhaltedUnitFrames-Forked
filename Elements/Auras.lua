@@ -1,7 +1,5 @@
 local _, UUF = ...
 
-local AuraDurationFormatter = C_StringUtil.CreateNumericRuleFormatter()
-local AuraDurationNoDecimalsFormatter = C_StringUtil.CreateNumericRuleFormatter()
 local AuraContainerState = setmetatable({}, {__mode = "k"})
 local AuraUnitFrames = setmetatable({}, {__mode = "k"})
 local AuraEligibilityEventFrame = CreateFrame("Frame")
@@ -59,13 +57,13 @@ end
 local function GetAuraDurationFormatter(DurationDB)
 	local decimalThreshold = 0
 	if DurationDB then
-		if DurationDB.ShowDecimalSeconds then
+		if DurationDB.ShowDecimalSeconds == true then
 			decimalThreshold = DurationDB.DecimalThreshold or 3
-		elseif DurationDB.ShowDecimalsUnderThree then
+		elseif DurationDB.ShowDecimalSeconds == nil and DurationDB.ShowDecimalsUnderThree then
 			decimalThreshold = 3
 		end
 	end
-	local formatter = decimalThreshold > 0 and AuraDurationFormatter or AuraDurationNoDecimalsFormatter
+	local formatter = C_StringUtil.CreateNumericRuleFormatter()
 	local breakpoints = {}
 	for _, breakpoint in ipairs(UUF.db.profile.General.CooldownText.CooldownBreakpoints) do
 		if decimalThreshold > 0 or breakpoint.displayStyle ~= "decimalSeconds" then
@@ -84,6 +82,39 @@ local function GetAuraDurationFormatter(DurationDB)
 	return formatter
 end
 
+local function CreateAuraIconBorder(parent)
+	local border = {
+		top = parent:CreateTexture(nil, "OVERLAY"),
+		bottom = parent:CreateTexture(nil, "OVERLAY"),
+		left = parent:CreateTexture(nil, "OVERLAY"),
+		right = parent:CreateTexture(nil, "OVERLAY"),
+	}
+	return border
+end
+
+local function UpdateAuraIconBorder(border, parent, shown)
+	if not border then return end
+	for _, texture in pairs(border) do
+		texture:ClearAllPoints()
+		texture:SetColorTexture(0, 0, 0, 1)
+		texture:SetShown(shown)
+	end
+	if not shown then return end
+
+	border.top:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+	border.top:SetPoint("TOPRIGHT", parent, "TOPRIGHT", 0, 0)
+	border.top:SetHeight(1)
+	border.bottom:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 0, 0)
+	border.bottom:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", 0, 0)
+	border.bottom:SetHeight(1)
+	border.left:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+	border.left:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 0, 0)
+	border.left:SetWidth(1)
+	border.right:SetPoint("TOPRIGHT", parent, "TOPRIGHT", 0, 0)
+	border.right:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", 0, 0)
+	border.right:SetWidth(1)
+end
+
 local function ApplyAuraButtonTextStyle(container, button, unitFrame, unit, AuraDB, DurationDB)
 	if button.Count then
 		ApplyFontStyle(button.Count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour, unitFrame, unit)
@@ -91,9 +122,15 @@ local function ApplyAuraButtonTextStyle(container, button, unitFrame, unit, Aura
 	end
 	if button.Duration then
 		ApplyFontStyle(button.Duration, button, DurationDB.Layout, GetAuraDurationFontSize(DurationDB, AuraDB), DurationDB.Colour, unitFrame, unit)
+		if button.DurationTextBinding then
+			button.DurationTextBinding:SetFormatter(container.durationFormatter)
+			button.DurationTextBinding:UpdateFontString()
+		end
 		button.Duration:SetShown(not DurationDB.HideDuration)
 	end
 	if button.Cooldown then button.Cooldown:SetHideCountdownNumbers(true) end
+	if not button.IconBorder then button.IconBorder = CreateAuraIconBorder(button) end
+	UpdateAuraIconBorder(button.IconBorder, button, AuraDB.Border ~= false)
 end
 
 local function CreateAuraButton(container, button)
@@ -118,6 +155,8 @@ local function CreateAuraButton(container, button)
 	icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 	button.Icon = icon
 	button:SetIcon(icon)
+	button.IconBorder = CreateAuraIconBorder(button)
+	UpdateAuraIconBorder(button.IconBorder, button, container.showIconBorder ~= false)
 
 	local textParent
 	if container.showCount or container.showDuration then
@@ -233,6 +272,7 @@ local function CreateAuraContainer(unitFrame, unit, auraKey)
 	container.size = state.Size
 	container.showCount = true
 	container.showDuration = true
+	container.showIconBorder = true
 	container.showCooldownSwipe = true
 	container.inverseCooldownSwipe = true
 	container.showBuffBorder = true
@@ -261,6 +301,7 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	container.showDuration = not DurationDB.HideDuration
 	container.showCooldownSwipe = DurationDB.ShowCooldownSwipe ~= false
 	container.inverseCooldownSwipe = DurationDB.InverseCooldownSwipe == true
+	container.showIconBorder = AuraDB.Border ~= false
 	container.showBuffBorder = AuraDB.ShowType == true
 	container.showDebuffBorder = AuraDB.ShowType == true
 	container.borderStyle = AuraButtonBorderStyle.Color
@@ -445,26 +486,7 @@ local function HideFakeAuras(container)
 end
 
 local function CreateFakeAuraButtonBorder(button)
-	local top = button:CreateTexture(nil, "OVERLAY", nil, 7)
-	top:SetColorTexture(0, 0, 0, 1)
-	top:SetPoint("TOPLEFT")
-	top:SetPoint("TOPRIGHT")
-	top:SetHeight(1)
-	local bottom = button:CreateTexture(nil, "OVERLAY", nil, 7)
-	bottom:SetColorTexture(0, 0, 0, 1)
-	bottom:SetPoint("BOTTOMLEFT")
-	bottom:SetPoint("BOTTOMRIGHT")
-	bottom:SetHeight(1)
-	local left = button:CreateTexture(nil, "OVERLAY", nil, 7)
-	left:SetColorTexture(0, 0, 0, 1)
-	left:SetPoint("TOPLEFT")
-	left:SetPoint("BOTTOMLEFT")
-	left:SetWidth(1)
-	local right = button:CreateTexture(nil, "OVERLAY", nil, 7)
-	right:SetColorTexture(0, 0, 0, 1)
-	right:SetPoint("TOPRIGHT")
-	right:SetPoint("BOTTOMRIGHT")
-	right:SetWidth(1)
+	button.IconBorder = CreateAuraIconBorder(button)
 end
 
 local function UpdateFakeAuras(container, unitFrame, unit, AuraDB, texture)
@@ -505,6 +527,7 @@ local function UpdateFakeAuras(container, unitFrame, unit, AuraDB, texture)
 			button.Duration = button:CreateFontString(nil, "OVERLAY")
 			container["fake" .. index] = button
 		end
+		UpdateAuraIconBorder(button.IconBorder, button, AuraDB.Border ~= false)
 		local row = math.floor((index - 1) / AuraDB.Wrap)
 		local column = (index - 1) % AuraDB.Wrap
 		local x = column * (AuraDB.Size + AuraDB.Layout[5]) * (AuraDB.GrowthDirection == "LEFT" and -1 or 1)
