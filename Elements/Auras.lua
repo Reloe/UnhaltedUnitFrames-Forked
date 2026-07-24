@@ -302,12 +302,17 @@ local function UpdateAuraButtonTypeBorder(container, button)
 	end
 	if not button.Border then return end
 	button.Border:SetShown(showBorder)
-	button:SetAuraBorder(button.Border, {
-		showIcon = container.showBorderSymbol,
-		showWhenHarmful = container.showDebuffBorder,
-		showWhenHelpful = container.showBuffBorder,
-		style = container.borderStyle,
-	})
+	if showBorder then
+		button:ClearDispelTypeTextures()
+		button:AddDispelTypeTexture(button.Border, {
+			showIcon = container.showBorderSymbol,
+			showWhenHarmful = container.showDebuffBorder,
+			showWhenHelpful = container.showBuffBorder,
+			style = container.borderStyle,
+		})
+	else
+		button:ClearDispelTypeTextures()
+	end
 end
 
 local function ApplyAuraButtonStyle(container, button, unitFrame, unit, AuraDB, DurationDB)
@@ -398,7 +403,7 @@ local function CreateAuraButton(container, button)
 		local border = button:CreateTexture(nil, "OVERLAY")
 		border:SetAllPoints()
 		button.Border = border
-		button:SetAuraBorder(border, {
+		button:AddDispelTypeTexture(border, {
 			showIcon = container.showBorderSymbol,
 			showWhenHarmful = container.showDebuffBorder,
 			showWhenHelpful = container.showBuffBorder,
