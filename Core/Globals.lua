@@ -522,13 +522,17 @@ function UUF:SetJustification(anchorFrom)
 end
 
 function UUF:GetUnitColour(unit, unitFrame)
-    if UnitIsPlayer(unit) or UnitInPartyIsAI(unit) then
+    local isPlayer = UnitIsPlayer(unit)
+    local isPartyAI = UnitInPartyIsAI(unit)
+    if not UUF:IsSecretValue(isPlayer) and not UUF:IsSecretValue(isPartyAI) and (isPlayer or isPartyAI) then
         local _, class = UnitClass(unit)
-        local r, g, b = UUF:GetConfiguredClassColour(class, unitFrame, unit)
-        if r then return r, g, b end
+        if not UUF:IsSecretValue(class) then
+            local r, g, b = UUF:GetConfiguredClassColour(class, unitFrame, unit)
+            if r then return r, g, b end
+        end
     end
     local reaction = UnitReaction(unit, "player")
-    if reaction and UUF.db.profile.General.Colours.Reaction[reaction] then
+    if reaction and not UUF:IsSecretValue(reaction) and UUF.db.profile.General.Colours.Reaction[reaction] then
         local r, g, b = unpack(UUF.db.profile.General.Colours.Reaction[reaction])
         return r, g, b
     end
@@ -537,8 +541,10 @@ end
 
 function UUF:GetClassColour(unitFrame)
     local _, class = UnitClass(unitFrame.unit)
-    local r, g, b = UUF:GetConfiguredClassColour(class, unitFrame, unitFrame.unit)
-    if r then return {r, g, b, 1} end
+    if not UUF:IsSecretValue(class) then
+        local r, g, b = UUF:GetConfiguredClassColour(class, unitFrame, unitFrame.unit)
+        if r then return {r, g, b, 1} end
+    end
 end
 
 function UUF:GetReactionColour(reaction)

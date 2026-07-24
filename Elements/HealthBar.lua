@@ -2,15 +2,85 @@ local _, UUF = ...
 local StatusBarInterpolation = Enum.StatusBarInterpolation
 local oUF = UUF.oUF
 
+local function IsKnownValue(value)
+    return value ~= nil and not UUF:IsSecretValue(value)
+end
+
+local function GetKnownClass(unit)
+    local class = select(2, UnitClass(unit))
+    if IsKnownValue(class) then return class end
+end
+
+local function GetKnownReaction(unit)
+    local reaction = UnitReaction(unit, "player")
+    if IsKnownValue(reaction) then return reaction end
+end
+
+local function GetKnownBool(value)
+    if UUF:IsSecretValue(value) then return end
+    return value and true or false
+end
+
+local function ApplyColour(healthBar, colour, alpha)
+    if not colour then return false end
+    if colour.GetRGB then
+        local r, g, b = colour:GetRGB()
+        healthBar:SetStatusBarColor(r, g, b, alpha)
+        return true
+    end
+    healthBar:SetStatusBarColor(colour[1], colour[2], colour[3], alpha)
+    return true
+end
+
+local function UpdateHealthBarColour(unitFrame, configuredUnit, eventUnit)
+    if eventUnit and unitFrame.unit and unitFrame.unit ~= eventUnit then return end
+    local healthBar = unitFrame.Health
+    if not healthBar then return end
+    local HealthBarDB = UUF:GetUnitDB(unitFrame, configuredUnit).HealthBar
+    local unitToken = unitFrame.unit or configuredUnit
+    local alpha = HealthBarDB.ForegroundOpacity
+
+    if HealthBarDB.ColourWhenDisconnected then
+        local connected = UnitIsConnected(unitToken)
+        if IsKnownValue(connected) and not connected and ApplyColour(healthBar, oUF.colors.disconnected, alpha) then return end
+    end
+
+    if HealthBarDB.ColourWhenTapped then
+        local playerControlled = GetKnownBool(UnitPlayerControlled(unitToken))
+        local tapDenied = GetKnownBool(UnitIsTapDenied(unitToken))
+        if playerControlled == false and tapDenied == true and ApplyColour(healthBar, oUF.colors.tapped, alpha) then return end
+    end
+
+    if HealthBarDB.ColourByClass then
+        local classUnit = configuredUnit == "pet" and "player" or unitToken
+        local isPlayer = GetKnownBool(UnitIsPlayer(classUnit))
+        local isPartyAI = GetKnownBool(UnitInPartyIsAI(classUnit))
+        if isPlayer or isPartyAI or configuredUnit == "pet" then
+            local r, g, b = UUF:GetConfiguredClassColour(GetKnownClass(classUnit), unitFrame, configuredUnit)
+            if r then
+                healthBar:SetStatusBarColor(r, g, b, alpha)
+                return
+            end
+        end
+
+        local reaction = GetKnownReaction(unitToken)
+        local reactionColour = reaction and UUF.db.profile.General.Colours.Reaction[reaction]
+        if reactionColour and ApplyColour(healthBar, reactionColour, alpha) then return end
+    end
+
+    healthBar:SetStatusBarColor(HealthBarDB.Foreground[1], HealthBarDB.Foreground[2], HealthBarDB.Foreground[3], alpha)
+end
+
 local function SetHealthBackgroundColour(unitFrame, unit, HealthBarDB, forceUpdate)
 	local backgroundUnit = unitFrame.unit or unit
-	local isDead = HealthBarDB.ColourBackdropWhenDead and UnitIsDeadOrGhost(backgroundUnit)
+	local deadState = HealthBarDB.ColourBackdropWhenDead and UnitIsDeadOrGhost(backgroundUnit)
+	local isDead = IsKnownValue(deadState) and deadState or false
 	local backgroundClass
 	local backgroundReaction
 	if HealthBarDB.ColourBackgroundByClass then
 		local unitToColour = backgroundUnit ~= "pet" and backgroundUnit or "player"
-		backgroundClass = select(2, UnitClass(unitToColour))
-		if not backgroundClass then backgroundReaction = UnitReaction(unitToColour, "player") end
+		backgroundClass = GetKnownClass(unitToColour)
+		if not backgroundClass then backgroundReaction = GetKnownReaction(unitToColour) end
 	end
 	if not forceUpdate and unitFrame.HealthBackgroundClass == backgroundClass and unitFrame.HealthBackgroundReaction == backgroundReaction and unitFrame.HealthBackgroundIsDead == isDead then return end
 	unitFrame.HealthBackgroundClass = backgroundClass
@@ -57,19 +127,7 @@ function UUF:CreateUnitHealthBar(unitFrame, unit)
         HealthBar.colorTapping = HealthBarDB.ColourWhenTapped
         HealthBar.colorDisconnected = HealthBarDB.ColourWhenDisconnected
         HealthBar.smoothing = HealthBarDB.Smooth ~= false and StatusBarInterpolation.ExponentialEaseOut or StatusBarInterpolation.Immediate
-		HealthBar.PostUpdateColor = function(healthBar, unit, colour)
-			local currentHealthBarDB = UUF:GetUnitDB(unitFrame, unit).HealthBar
-			if UUF:UsesRaidClassColours(unitFrame, unit) and currentHealthBarDB.ColourByClass and UnitIsPlayer(unit) and (not currentHealthBarDB.ColourWhenDisconnected or UnitIsConnected(unit)) and (not currentHealthBarDB.ColourWhenTapped or not UnitIsTapDenied(unit)) then
-				local r, g, b = UUF:GetConfiguredClassColour(select(2, UnitClass(unit)), unitFrame, unit)
-				if r then healthBar:SetStatusBarColor(r, g, b, currentHealthBarDB.ForegroundOpacity) return end
-			end
-			if colour and colour ~= oUF.colors.health then return end
-			if unit == "pet" and currentHealthBarDB.ColourByClass then
-				local r, g, b = UUF:GetConfiguredClassColour(select(2, UnitClass("player")), unitFrame, unit)
-				if r then healthBar:SetStatusBarColor(r, g, b, currentHealthBarDB.ForegroundOpacity) return end
-			end
-			healthBar:SetStatusBarColor(currentHealthBarDB.Foreground[1], currentHealthBarDB.Foreground[2], currentHealthBarDB.Foreground[3], currentHealthBarDB.ForegroundOpacity)
-		end
+		HealthBar.UpdateColor = function(_, _, eventUnit) UpdateHealthBarColour(unitFrame, unit, eventUnit) end
 
         if unit == "pet" and HealthBarDB.ColourByClass then
             HealthBar.colorClass = false
@@ -118,6 +176,7 @@ function UUF:UpdateUnitHealthBar(unitFrame, unit)
         unitFrame.Health.colorTapping = HealthBarDB.ColourWhenTapped
         unitFrame.Health.colorDisconnected = HealthBarDB.ColourWhenDisconnected
         unitFrame.Health.smoothing = HealthBarDB.Smooth ~= false and StatusBarInterpolation.ExponentialEaseOut or StatusBarInterpolation.Immediate
+        unitFrame.Health.UpdateColor = function(_, _, eventUnit) UpdateHealthBarColour(unitFrame, unit, eventUnit) end
         unitFrame.Health:SetStatusBarTexture(UUF:GetStatusBarTexture(unitFrame, unit, "Foreground"))
         if unit == "pet" and HealthBarDB.ColourByClass then
             unitFrame.Health.colorClass = false
