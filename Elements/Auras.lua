@@ -3,10 +3,155 @@ local _, UUF = ...
 local AuraContainerState = setmetatable({}, {__mode = "k"})
 local AuraUnitFrames = setmetatable({}, {__mode = "k"})
 local AuraEligibilityEventFrame = CreateFrame("Frame")
+local AuraContainerSerial = 0
 local AuraBorderOptions = {
 	[false] = {showIcon = false, showWhenHarmful = false, showWhenHelpful = false, style = AuraButtonBorderStyle.Color},
 	[true] = {showIcon = false, showWhenHarmful = true, showWhenHelpful = true, style = AuraButtonBorderStyle.Color},
 }
+
+local function UsesFlowLayoutOptions()
+	return CustomAuraContainerGroupLayoutDefaultOptions and CustomAuraContainerGroupLayoutDefaultOptions.elementSpacing ~= nil
+end
+
+local function ConvertAuraGroupLayoutOptions(layout)
+	if not layout or not UsesFlowLayoutOptions() then return layout end
+	local converted = {}
+	for key, value in pairs(layout) do converted[key] = value end
+	converted.elementSpacing = converted.elementSpacing or converted.elementSpacingX
+	converted.lineSpacing = converted.lineSpacing or converted.elementSpacingY
+	converted.groupSpacing = converted.groupSpacing or converted.gapX
+	converted.groupLineSpacing = converted.groupLineSpacing or converted.gapY
+	if converted.forceNewLine == nil then converted.forceNewLine = converted.forceNewRow end
+	converted.elementSpacingX = nil
+	converted.elementSpacingY = nil
+	converted.gapX = nil
+	converted.gapY = nil
+	converted.forceNewRow = nil
+	return converted
+end
+
+local function ConvertAuraGroupOptions(options)
+	if not options or not UsesFlowLayoutOptions() then return options end
+	local converted = {}
+	for key, value in pairs(options) do converted[key] = value end
+	converted.layout = ConvertAuraGroupLayoutOptions(converted.layout)
+	return converted
+end
+
+local function SetAuraContainerLineSize(container, lineSize)
+	if container.SetAuraLayoutRowWidth then
+		container:SetAuraLayoutRowWidth(lineSize)
+	else
+		local flowLayout = (container.GetFlowLayout and container:GetFlowLayout()) or container.flowLayout
+		if flowLayout then flowLayout:SetMaximumLineSize(lineSize) end
+	end
+end
+
+local function SetAuraContainerAnchorPoint(container, anchorPoint)
+	if container.SetAuraLayoutAnchorPoint then
+		container:SetAuraLayoutAnchorPoint(anchorPoint)
+	else
+		local flowLayout = (container.GetFlowLayout and container:GetFlowLayout()) or container.flowLayout
+		if flowLayout then flowLayout:SetAnchorPoint(anchorPoint) end
+	end
+end
+
+local function SetAuraContainerGrowthDirection(container, growthX, growthY)
+	if container.SetAuraLayoutGrowthDirection then
+		container:SetAuraLayoutGrowthDirection(growthX, growthY)
+	else
+		local flowLayout = (container.GetFlowLayout and container:GetFlowLayout()) or container.flowLayout
+		if not flowLayout or not AnchorUtil or not AnchorUtil.FlowDirection then return end
+		local horizontalDirection = growthX == -1 and AnchorUtil.FlowDirection.Left or AnchorUtil.FlowDirection.Right
+		local verticalDirection = growthY == -1 and AnchorUtil.FlowDirection.Down or AnchorUtil.FlowDirection.Up
+		flowLayout:SetGrowthDirection(horizontalDirection, verticalDirection)
+	end
+end
+
+local function SetAuraContainerPadding(container, left, right, top, bottom)
+	if container.SetAuraLayoutPadding then
+		container:SetAuraLayoutPadding(left, right, top, bottom)
+	else
+		local flowLayout = (container.GetFlowLayout and container:GetFlowLayout()) or container.flowLayout
+		if flowLayout then flowLayout:SetPadding(left, right, top, bottom) end
+	end
+end
+
+local function MarkAuraContainerLayoutDirty(container)
+	if container.MarkDirty and AuraContainerDirtyMask then
+		container:MarkDirty(AuraContainerDirtyMask.AuraFrameLayout)
+	end
+end
+
+local function ApplyAuraContainerLayoutOptions(container, options)
+	SetAuraContainerLineSize(container, options.maxWidth or container:GetParent():GetWidth())
+	SetAuraContainerAnchorPoint(container, options.initialAnchor or "TOPLEFT")
+	SetAuraContainerGrowthDirection(container, options.growthX == "LEFT" and -1 or 1, options.growthY == "DOWN" and -1 or 1)
+	SetAuraContainerPadding(container, options.paddingLeft or options.padding or 0, options.paddingRight or options.padding or 0, options.paddingTop or options.padding or 0, options.paddingBottom or options.padding or 0)
+	if options.policies then
+		container:SetAuraProcessingPolicy(CustomAuraContainerAuraProcessingPolicy.ProcessAura, options.policies)
+	end
+	MarkAuraContainerLayoutDirty(container)
+end
+
+local function CreateAddonAuraContainer(parent, name, options)
+	if C_AddOns and not C_AddOns.IsAddOnLoaded("Blizzard_AuraContainer") then
+		pcall(C_AddOns.LoadAddOn, "Blizzard_AuraContainer")
+	end
+	AuraContainerSerial = AuraContainerSerial + 1
+	name = (name or "UUF_AuraContainer"):gsub("[^%w_]", "") .. AuraContainerSerial
+	local container = CreateFrame("AuraContainer", name, parent, "CustomAuraContainerTemplate")
+	if not container then return end
+	ApplyAuraContainerLayoutOptions(container, options or {})
+	container.AddGroup = function(self, filter, groupOptions)
+		if not groupOptions then groupOptions = {} end
+		if not groupOptions.initializeFrame and self.CreateButton then
+			groupOptions.initializeFrame = GenerateClosure(self.CreateButton, self, groupOptions)
+		end
+		self.UUFGroupIndex = (self.UUFGroupIndex or 0) + 1
+		local groupKey = self:GetDebugName() .. self.UUFGroupIndex
+		self:AddAuraGroup(groupKey, filter, ConvertAuraGroupOptions(groupOptions))
+		return groupKey
+	end
+	container.AddSlot = function(self, filter, slotOptions)
+		if not slotOptions then slotOptions = {} end
+		if not slotOptions.initializeFrame and self.CreateButton then
+			slotOptions.initializeFrame = GenerateClosure(self.CreateButton, self, slotOptions)
+		end
+		self.UUFSlotIndex = (self.UUFSlotIndex or 0) + 1
+		local slotKey = self:GetDebugName() .. self.UUFSlotIndex
+		return self:AddAuraSlot(slotKey, filter, slotOptions)
+	end
+	return container
+end
+
+function UUF:CreateAuraContainerFrame(parent, name, options)
+	return CreateAddonAuraContainer(parent, name, options)
+end
+
+local function CreateAuraGroupLayout(size, spacing)
+	if UsesFlowLayoutOptions() then
+		return {
+			elementWidth = size,
+			elementHeight = size,
+			elementSpacing = spacing,
+			lineSpacing = spacing,
+			groupSpacing = 0,
+			groupLineSpacing = 0,
+			forceNewLine = false,
+		}
+	end
+
+	return {
+		elementWidth = size,
+		elementHeight = size,
+		elementSpacingX = spacing,
+		elementSpacingY = spacing,
+		gapX = 0,
+		gapY = 0,
+		forceNewRow = false,
+	}
+end
 
 AuraEligibilityEventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 AuraEligibilityEventFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
@@ -122,10 +267,63 @@ local function UpdateAuraIconBorder(border, parent, shown)
 	border.right:SetWidth(1)
 end
 
-local function ApplyAuraButtonTextStyle(container, button, unitFrame, unit, AuraDB, DurationDB)
+local function CanUpdateAuraButton(button)
+	if not button then return false end
+	if button.CanBeAccessedInContext then
+		local success, canAccess = pcall(button.CanBeAccessedInContext, button)
+		if success and canAccess == false then return false end
+	end
+	return true
+end
+
+local function GetAuraButtonTextParent(button)
+	if not button.TextParent then
+		button.TextParent = CreateFrame("Frame", nil, button)
+		button.TextParent:SetAllPoints()
+		button.TextParent:SetFrameLevel(button.Cooldown and button.Cooldown:GetFrameLevel() + 1 or button:GetFrameLevel() + 1)
+	end
+	return button.TextParent
+end
+
+local function UpdateAuraButtonCooldown(container, button)
+	if not button.Cooldown then return end
+	button.Cooldown:SetDrawSwipe(container.showCooldownSwipe ~= false)
+	button.Cooldown:SetDrawEdge(false)
+	button.Cooldown:SetDrawBling(false)
+	button.Cooldown:SetReverse(container.inverseCooldownSwipe == true)
+	button.Cooldown:SetHideCountdownNumbers(true)
+end
+
+local function UpdateAuraButtonTypeBorder(container, button)
+	local showBorder = container.showBuffBorder or container.showDebuffBorder
+	if showBorder and not button.Border then
+		button.Border = button:CreateTexture(nil, "OVERLAY")
+		button.Border:SetAllPoints()
+	end
+	if not button.Border then return end
+	button.Border:SetShown(showBorder)
+	button:SetAuraBorder(button.Border, {
+		showIcon = container.showBorderSymbol,
+		showWhenHarmful = container.showDebuffBorder,
+		showWhenHelpful = container.showBuffBorder,
+		style = container.borderStyle,
+	})
+end
+
+local function ApplyAuraButtonStyle(container, button, unitFrame, unit, AuraDB, DurationDB)
+	if not CanUpdateAuraButton(button) then return end
+	button:SetSize(AuraDB.Size, AuraDB.Size)
+	UpdateAuraButtonCooldown(container, button)
 	if button.Count then
 		ApplyFontStyle(button.Count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour, unitFrame, unit)
 		button.Count:SetShown(not AuraDB.Count.HideStacks)
+	elseif not AuraDB.Count.HideStacks then
+		local count = GetAuraButtonTextParent(button):CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+		button.Count = count
+		button:SetApplicationCount(count, {
+			formatter = container.countFormatter,
+		})
+		ApplyFontStyle(button.Count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour, unitFrame, unit)
 	end
 	if button.Duration then
 		ApplyFontStyle(button.Duration, button, DurationDB.Layout, GetAuraDurationFontSize(DurationDB, AuraDB), DurationDB.Colour, unitFrame, unit)
@@ -134,10 +332,17 @@ local function ApplyAuraButtonTextStyle(container, button, unitFrame, unit, Aura
 			button.DurationTextBinding:UpdateFontString()
 		end
 		button.Duration:SetShown(not DurationDB.HideDuration)
+	elseif not DurationDB.HideDuration then
+		local duration = GetAuraButtonTextParent(button):CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+		button.Duration = duration
+		button:SetDurationText(duration, {
+			textFormatter = container.durationFormatter,
+		})
+		ApplyFontStyle(button.Duration, button, DurationDB.Layout, GetAuraDurationFontSize(DurationDB, AuraDB), DurationDB.Colour, unitFrame, unit)
 	end
-	if button.Cooldown then button.Cooldown:SetHideCountdownNumbers(true) end
 	if not button.IconBorder then button.IconBorder = CreateAuraIconBorder(button) end
 	UpdateAuraIconBorder(button.IconBorder, button, AuraDB.Border ~= false)
+	UpdateAuraButtonTypeBorder(container, button)
 end
 
 local function CreateAuraButton(container, button)
@@ -167,7 +372,7 @@ local function CreateAuraButton(container, button)
 
 	local textParent
 	if container.showCount or container.showDuration then
-		textParent = CreateFrame("Frame", nil, button)
+		textParent = GetAuraButtonTextParent(button)
 		textParent:SetAllPoints()
 		textParent:SetFrameLevel(cooldown:GetFrameLevel() + 1)
 	end
@@ -185,7 +390,7 @@ local function CreateAuraButton(container, button)
 		local duration = textParent:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
 		button.Duration = duration
 		button:SetDurationText(duration, {
-			formatter = container.durationFormatter,
+			textFormatter = container.durationFormatter,
 		})
 	end
 
@@ -209,7 +414,7 @@ end
 local function ApplyAuraContainerTextStyle(container, unitFrame, unit, AuraDB, DurationDB)
 	if not container.buttons then return end
 	for button in pairs(container.buttons) do
-		ApplyAuraButtonTextStyle(container, button, unitFrame, unit, AuraDB, DurationDB)
+		ApplyAuraButtonStyle(container, button, unitFrame, unit, AuraDB, DurationDB)
 	end
 end
 
@@ -266,7 +471,8 @@ end
 
 local function CreateAuraContainer(unitFrame, unit, auraKey)
 	local AuraDB = GetAuraDB(unitFrame, unit, auraKey)
-	local container = unitFrame:CreateAuras({
+	local frameName = (unitFrame:GetName() or "UUF_AuraContainer") .. tostring(auraKey or "Aura"):gsub("[^%w_]", "")
+	local container = UUF:CreateAuraContainerFrame(unitFrame, frameName, {
 		maxWidth = AuraDB and math.max((AuraDB.Size + AuraDB.Layout[5]) * AuraDB.Wrap - AuraDB.Layout[5], 1) or 1,
 		initialAnchor = auraKey,
 		growthX = AuraDB and AuraDB.GrowthDirection == "LEFT" and "LEFT" or "RIGHT",
@@ -335,15 +541,7 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 		end
 	end
 	local activeGroups = {}
-	local layout = {
-		elementWidth = state.Size,
-		elementHeight = state.Size,
-		elementSpacingX = AuraDB.Layout[5],
-		elementSpacingY = AuraDB.Layout[5],
-		gapX = 0,
-		gapY = 0,
-		forceNewRow = false,
-	}
+	local layout = CreateAuraGroupLayout(state.Size, AuraDB.Layout[5])
 	local reverse = AuraDB.Sorting == "BLIZZARD_REVERSED" or AuraDB.Sorting == "DURATION_REVERSED"
 	local sortMethod = (AuraDB.Sorting == "DURATION" or AuraDB.Sorting == "DURATION_REVERSED") and AuraContainerSortMethod.ExpirationOnly or AuraContainerSortMethod.Default
 	local sortDirection = reverse and AuraContainerSortDirection.Reverse or AuraContainerSortDirection.Normal
@@ -383,9 +581,10 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	container:SetPoint(containerAnchor, anchorParent, AuraDB.Layout[2], AuraDB.Layout[3], AuraDB.Layout[4])
 	container:SetSize(width, height)
 	container:SetFrameStrata(UUF:GetUnitDB(unitFrame, unit).Auras.FrameStrata)
-	container:SetAuraLayoutRowWidth(width)
-	container:SetAuraLayoutAnchorPoint(auraAnchor)
-	container:SetAuraLayoutGrowthDirection(AuraDB.GrowthDirection == "LEFT" and -1 or 1, AuraDB.WrapDirection == "DOWN" and -1 or 1)
+	SetAuraContainerLineSize(container, width)
+	SetAuraContainerAnchorPoint(container, auraAnchor)
+	SetAuraContainerGrowthDirection(container, AuraDB.GrowthDirection == "LEFT" and -1 or 1, AuraDB.WrapDirection == "DOWN" and -1 or 1)
+	MarkAuraContainerLayoutDirty(container)
 end
 
 function UUF:UpdateUnitAuraEligibility(unitFrame, unit)

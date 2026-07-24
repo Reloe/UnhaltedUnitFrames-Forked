@@ -4041,8 +4041,8 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     ShowSwipeToggle:SetLabel("Show Cooldown Swipe")
     ShowSwipeToggle:SetValue(DurationDB.ShowCooldownSwipe ~= false)
     ShowSwipeToggle:SetRelativeWidth(0.5)
-    ShowSwipeToggle:SetCallback("OnValueChanged", function(_, _, value) DurationDB.ShowCooldownSwipe = value reloadRequired = true UpdateAuras() end)
-    ShowSwipeToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(ShowSwipeToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine("Shows the radial cooldown swipe on this aura container's icons. Reloading the UI may be required for active aura buttons.", 1, 1, 1, true) GameTooltip:Show() end)
+    ShowSwipeToggle:SetCallback("OnValueChanged", function(_, _, value) DurationDB.ShowCooldownSwipe = value UpdateAuras() end)
+    ShowSwipeToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(ShowSwipeToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine("Shows the radial cooldown swipe on this aura container's icons.", 1, 1, 1, true) GameTooltip:Show() end)
     ShowSwipeToggle:SetCallback("OnLeave", function() GameTooltip:Hide() end)
     DurationContainer:AddChild(ShowSwipeToggle)
 
@@ -4050,8 +4050,8 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     InverseSwipeToggle:SetLabel("Inverse Cooldown Swipe")
     InverseSwipeToggle:SetValue(DurationDB.InverseCooldownSwipe == true)
     InverseSwipeToggle:SetRelativeWidth(0.5)
-    InverseSwipeToggle:SetCallback("OnValueChanged", function(_, _, value) DurationDB.InverseCooldownSwipe = value reloadRequired = true UpdateAuras() end)
-    InverseSwipeToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(InverseSwipeToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine("Inverts the radial cooldown swipe direction on this aura container's icons. Reloading the UI may be required for active aura buttons.", 1, 1, 1, true) GameTooltip:Show() end)
+    InverseSwipeToggle:SetCallback("OnValueChanged", function(_, _, value) DurationDB.InverseCooldownSwipe = value UpdateAuras() end)
+    InverseSwipeToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(InverseSwipeToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine("Inverts the radial cooldown swipe direction on this aura container's icons.", 1, 1, 1, true) GameTooltip:Show() end)
     InverseSwipeToggle:SetCallback("OnLeave", function() GameTooltip:Hide() end)
     DurationContainer:AddChild(InverseSwipeToggle)
 

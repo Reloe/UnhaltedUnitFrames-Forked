@@ -30,7 +30,7 @@ DispelCapabilityEventFrame:SetScript("OnEvent", function(_, event, eventUnit)
 end)
 
 function UUF:CreateUnitDispelHighlight(unitFrame, unit)
-	local container = unitFrame:CreateAuras({maxWidth = 1, initialAnchor = "CENTER"})
+	local container = UUF:CreateAuraContainerFrame(unitFrame, (unitFrame:GetName() or "UUF") .. "DispelHighlight", {maxWidth = 1, initialAnchor = "CENTER"})
 	if not container then return end
 	local state = {Unit = unit, Slots = {}, EnabledTypes = {}}
 	local DispelHighlightDB = UUF:GetUnitDB(unitFrame, unit).HealthBar.DispelHighlight
