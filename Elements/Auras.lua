@@ -8,6 +8,14 @@ local AuraBorderOptions = {
 	[false] = {showIcon = false, showWhenHarmful = false, showWhenHelpful = false, style = AuraButtonBorderStyle.Color},
 	[true] = {showIcon = false, showWhenHarmful = true, showWhenHelpful = true, style = AuraButtonBorderStyle.Color},
 }
+local RaidAuraExcludedSpellIDs = {
+	[57723] = true, -- Exhaustion
+	[390435] = true, -- Exhaustion
+	[57724] = true, -- Sated
+	[71041] = true, -- Dungeon Deserter
+	[206151] = true, -- Challenger's Burden
+	[264689] = true, -- Fatigued
+}
 
 function UUF:CreateAuraContainerFrame(parent, name, options)
 	if C_AddOns and not C_AddOns.IsAddOnLoaded("Blizzard_AuraContainer") then
@@ -405,7 +413,17 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	end
 	local auraType = AuraDB.Type == "Debuffs" and "HARMFUL" or "HELPFUL"
 	local hasSpellIDs = next(AuraDB.SpellIDs)
-	local candidateFilters = hasSpellIDs and {includeSpellIDs = AuraDB.SpellIDs} or nil
+	local raidCandidateFilters
+	local spellIDCandidateFilters
+	if UUF:GetNormalizedUnit(unit) == "raid" then
+		raidCandidateFilters = {excludeSpellIDs = RaidAuraExcludedSpellIDs}
+	end
+	if hasSpellIDs then
+		spellIDCandidateFilters = {
+			includeSpellIDs = AuraDB.SpellIDs,
+			excludeSpellIDs = raidCandidateFilters and RaidAuraExcludedSpellIDs or nil,
+		}
+	end
 	state.Size = AuraDB.Size
 	container.size = AuraDB.Size
 	local DurationDB = GetAuraDurationDB(unitFrame, unit, AuraDB)
@@ -454,7 +472,7 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	local sortDirection = reverse and AuraContainerSortDirection.Reverse or AuraContainerSortDirection.Normal
 	for _, filter in ipairs(filters) do
 		local groupKey = state.Groups[filter]
-		local groupCandidateFilters = activeSpellIDGroups[filter] and candidateFilters or nil
+		local groupCandidateFilters = activeSpellIDGroups[filter] and spellIDCandidateFilters or raidCandidateFilters
 		if not groupKey then
 			container.size = state.Size
 			groupKey = container:AddGroup(filter, {
