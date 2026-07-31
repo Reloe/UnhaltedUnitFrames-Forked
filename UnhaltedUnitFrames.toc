@@ -1,5 +1,5 @@
 ## Title: |cFF8080FFUnhalted|rUnitFrames
-## Interface: 120000, 120001, 120005, 120007, 120100
+## Interface: 120100
 ## Version: V12.1.0-alpha
 ## Author: |cFF8080FFUnhalted|r
 ## Notes: Replacement Unit Frames for Blizzard. Focused on performance, customization & a complete out of the box experience.
