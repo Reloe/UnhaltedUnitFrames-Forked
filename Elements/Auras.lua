@@ -9,92 +9,7 @@ local AuraBorderOptions = {
 	[true] = {showIcon = false, showWhenHarmful = true, showWhenHelpful = true, style = AuraButtonBorderStyle.Color},
 }
 
-local function UsesFlowLayoutOptions()
-	return CustomAuraContainerGroupLayoutDefaultOptions and CustomAuraContainerGroupLayoutDefaultOptions.elementSpacing ~= nil
-end
-
-local function ConvertAuraGroupLayoutOptions(layout)
-	if not layout or not UsesFlowLayoutOptions() then return layout end
-	local converted = {}
-	for key, value in pairs(layout) do converted[key] = value end
-	converted.elementSpacing = converted.elementSpacing or converted.elementSpacingX
-	converted.lineSpacing = converted.lineSpacing or converted.elementSpacingY
-	converted.groupSpacing = converted.groupSpacing or converted.gapX
-	converted.groupLineSpacing = converted.groupLineSpacing or converted.gapY
-	if converted.forceNewLine == nil then converted.forceNewLine = converted.forceNewRow end
-	converted.elementSpacingX = nil
-	converted.elementSpacingY = nil
-	converted.gapX = nil
-	converted.gapY = nil
-	converted.forceNewRow = nil
-	return converted
-end
-
-local function ConvertAuraGroupOptions(options)
-	if not options or not UsesFlowLayoutOptions() then return options end
-	local converted = {}
-	for key, value in pairs(options) do converted[key] = value end
-	converted.layout = ConvertAuraGroupLayoutOptions(converted.layout)
-	return converted
-end
-
-local function SetAuraContainerLineSize(container, lineSize)
-	if container.SetAuraLayoutRowWidth then
-		container:SetAuraLayoutRowWidth(lineSize)
-	else
-		local flowLayout = (container.GetFlowLayout and container:GetFlowLayout()) or container.flowLayout
-		if flowLayout then flowLayout:SetMaximumLineSize(lineSize) end
-	end
-end
-
-local function SetAuraContainerAnchorPoint(container, anchorPoint)
-	if container.SetAuraLayoutAnchorPoint then
-		container:SetAuraLayoutAnchorPoint(anchorPoint)
-	else
-		local flowLayout = (container.GetFlowLayout and container:GetFlowLayout()) or container.flowLayout
-		if flowLayout then flowLayout:SetAnchorPoint(anchorPoint) end
-	end
-end
-
-local function SetAuraContainerGrowthDirection(container, growthX, growthY)
-	if container.SetAuraLayoutGrowthDirection then
-		container:SetAuraLayoutGrowthDirection(growthX, growthY)
-	else
-		local flowLayout = (container.GetFlowLayout and container:GetFlowLayout()) or container.flowLayout
-		if not flowLayout or not AnchorUtil or not AnchorUtil.FlowDirection then return end
-		local horizontalDirection = growthX == -1 and AnchorUtil.FlowDirection.Left or AnchorUtil.FlowDirection.Right
-		local verticalDirection = growthY == -1 and AnchorUtil.FlowDirection.Down or AnchorUtil.FlowDirection.Up
-		flowLayout:SetGrowthDirection(horizontalDirection, verticalDirection)
-	end
-end
-
-local function SetAuraContainerPadding(container, left, right, top, bottom)
-	if container.SetAuraLayoutPadding then
-		container:SetAuraLayoutPadding(left, right, top, bottom)
-	else
-		local flowLayout = (container.GetFlowLayout and container:GetFlowLayout()) or container.flowLayout
-		if flowLayout then flowLayout:SetPadding(left, right, top, bottom) end
-	end
-end
-
-local function MarkAuraContainerLayoutDirty(container)
-	if container.MarkDirty and AuraContainerDirtyMask then
-		container:MarkDirty(AuraContainerDirtyMask.AuraFrameLayout)
-	end
-end
-
-local function ApplyAuraContainerLayoutOptions(container, options)
-	SetAuraContainerLineSize(container, options.maxWidth or container:GetParent():GetWidth())
-	SetAuraContainerAnchorPoint(container, options.initialAnchor or "TOPLEFT")
-	SetAuraContainerGrowthDirection(container, options.growthX == "LEFT" and -1 or 1, options.growthY == "DOWN" and -1 or 1)
-	SetAuraContainerPadding(container, options.paddingLeft or options.padding or 0, options.paddingRight or options.padding or 0, options.paddingTop or options.padding or 0, options.paddingBottom or options.padding or 0)
-	if options.policies then
-		container:SetAuraProcessingPolicy(CustomAuraContainerAuraProcessingPolicy.ProcessAura, options.policies)
-	end
-	MarkAuraContainerLayoutDirty(container)
-end
-
-local function CreateAddonAuraContainer(parent, name, options)
+function UUF:CreateAuraContainerFrame(parent, name, options)
 	if C_AddOns and not C_AddOns.IsAddOnLoaded("Blizzard_AuraContainer") then
 		pcall(C_AddOns.LoadAddOn, "Blizzard_AuraContainer")
 	end
@@ -102,7 +17,14 @@ local function CreateAddonAuraContainer(parent, name, options)
 	name = (name or "UUF_AuraContainer"):gsub("[^%w_]", "") .. AuraContainerSerial
 	local container = CreateFrame("AuraContainer", name, parent, "CustomAuraContainerTemplate")
 	if not container then return end
-	ApplyAuraContainerLayoutOptions(container, options or {})
+	options = options or {}
+	container:SetFlowLayoutAxis(AnchorUtil.FlowLayoutAxis.Horizontal)
+	container:SetFlowLayoutMaximumLineSize(options.maxWidth or parent:GetWidth())
+	container:SetFlowLayoutAnchorPoint(options.initialAnchor or "TOPLEFT")
+	container:SetFlowLayoutGrowthDirection(
+		options.growthX == "LEFT" and AnchorUtil.FlowDirection.Left or AnchorUtil.FlowDirection.Right,
+		options.growthY == "DOWN" and AnchorUtil.FlowDirection.Down or AnchorUtil.FlowDirection.Up
+	)
 	container.AddGroup = function(self, filter, groupOptions)
 		if not groupOptions then groupOptions = {} end
 		if not groupOptions.initializeFrame and self.CreateButton then
@@ -110,7 +32,7 @@ local function CreateAddonAuraContainer(parent, name, options)
 		end
 		self.UUFGroupIndex = (self.UUFGroupIndex or 0) + 1
 		local groupKey = self:GetDebugName() .. self.UUFGroupIndex
-		self:AddAuraGroup(groupKey, filter, ConvertAuraGroupOptions(groupOptions))
+		self:AddAuraGroup(groupKey, filter, groupOptions)
 		return groupKey
 	end
 	container.AddSlot = function(self, filter, slotOptions)
@@ -123,34 +45,6 @@ local function CreateAddonAuraContainer(parent, name, options)
 		return self:AddAuraSlot(slotKey, filter, slotOptions)
 	end
 	return container
-end
-
-function UUF:CreateAuraContainerFrame(parent, name, options)
-	return CreateAddonAuraContainer(parent, name, options)
-end
-
-local function CreateAuraGroupLayout(size, spacing)
-	if UsesFlowLayoutOptions() then
-		return {
-			elementWidth = size,
-			elementHeight = size,
-			elementSpacing = spacing,
-			lineSpacing = spacing,
-			groupSpacing = 0,
-			groupLineSpacing = 0,
-			forceNewLine = false,
-		}
-	end
-
-	return {
-		elementWidth = size,
-		elementHeight = size,
-		elementSpacingX = spacing,
-		elementSpacingY = spacing,
-		gapX = 0,
-		gapY = 0,
-		forceNewRow = false,
-	}
 end
 
 AuraEligibilityEventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
@@ -546,7 +440,15 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 		end
 	end
 	local activeGroups = {}
-	local layout = CreateAuraGroupLayout(state.Size, AuraDB.Layout[5])
+	local layout = {
+		elementWidth = state.Size,
+		elementHeight = state.Size,
+		elementSpacing = AuraDB.Layout[5],
+		lineSpacing = AuraDB.Layout[5],
+		groupSpacing = 0,
+		groupLineSpacing = 0,
+		forceNewLine = false,
+	}
 	local reverse = AuraDB.Sorting == "BLIZZARD_REVERSED" or AuraDB.Sorting == "DURATION_REVERSED"
 	local sortMethod = (AuraDB.Sorting == "DURATION" or AuraDB.Sorting == "DURATION_REVERSED") and AuraContainerSortMethod.ExpirationOnly or AuraContainerSortMethod.Default
 	local sortDirection = reverse and AuraContainerSortDirection.Reverse or AuraContainerSortDirection.Normal
@@ -586,10 +488,12 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	container:SetPoint(containerAnchor, anchorParent, AuraDB.Layout[2], AuraDB.Layout[3], AuraDB.Layout[4])
 	container:SetSize(width, height)
 	container:SetFrameStrata(UUF:GetUnitDB(unitFrame, unit).Auras.FrameStrata)
-	SetAuraContainerLineSize(container, width)
-	SetAuraContainerAnchorPoint(container, auraAnchor)
-	SetAuraContainerGrowthDirection(container, AuraDB.GrowthDirection == "LEFT" and -1 or 1, AuraDB.WrapDirection == "DOWN" and -1 or 1)
-	MarkAuraContainerLayoutDirty(container)
+	container:SetFlowLayoutMaximumLineSize(width)
+	container:SetFlowLayoutAnchorPoint(auraAnchor)
+	container:SetFlowLayoutGrowthDirection(
+		AuraDB.GrowthDirection == "LEFT" and AnchorUtil.FlowDirection.Left or AnchorUtil.FlowDirection.Right,
+		AuraDB.WrapDirection == "DOWN" and AnchorUtil.FlowDirection.Down or AnchorUtil.FlowDirection.Up
+	)
 end
 
 function UUF:UpdateUnitAuraEligibility(unitFrame, unit)
