@@ -412,7 +412,7 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	container.showCount = not AuraDB.Count.HideStacks
 	container.showDuration = not DurationDB.HideDuration
 	container.showCooldownSwipe = DurationDB.ShowCooldownSwipe ~= false
-	container.inverseCooldownSwipe = DurationDB.InverseCooldownSwipe == true
+	container.inverseCooldownSwipe = DurationDB.InverseCooldownSwipe ~= false
 	container.showIconBorder = AuraDB.Border ~= false
 	container.showBuffBorder = AuraDB.ShowType == true
 	container.showDebuffBorder = AuraDB.ShowType == true

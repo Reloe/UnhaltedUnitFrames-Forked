@@ -3608,7 +3608,7 @@ local function EnsureAuraContainerDurationDB(unit, AuraDB)
 		AuraDB.Duration.ShowDecimalsUnderThree = nil
 		if AuraDB.Duration.DecimalThreshold == nil then AuraDB.Duration.DecimalThreshold = 3 end
 		if AuraDB.Duration.ShowCooldownSwipe == nil then AuraDB.Duration.ShowCooldownSwipe = true end
-		if AuraDB.Duration.InverseCooldownSwipe == nil then AuraDB.Duration.InverseCooldownSwipe = false end
+		if AuraDB.Duration.InverseCooldownSwipe == nil then AuraDB.Duration.InverseCooldownSwipe = true end
 		return AuraDB.Duration
 	end
 	local SourceDB = UUF.db.profile.General.CooldownText
@@ -4048,7 +4048,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
 
     InverseSwipeToggle = AG:Create("CheckBox")
     InverseSwipeToggle:SetLabel("Inverse Cooldown Swipe")
-    InverseSwipeToggle:SetValue(DurationDB.InverseCooldownSwipe == true)
+    InverseSwipeToggle:SetValue(DurationDB.InverseCooldownSwipe ~= false)
     InverseSwipeToggle:SetRelativeWidth(0.5)
     InverseSwipeToggle:SetCallback("OnValueChanged", function(_, _, value) DurationDB.InverseCooldownSwipe = value UpdateAuras() end)
     InverseSwipeToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(InverseSwipeToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine("Inverts the radial cooldown swipe direction on this aura container's icons.", 1, 1, 1, true) GameTooltip:Show() end)
