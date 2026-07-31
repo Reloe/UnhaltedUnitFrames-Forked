@@ -6,11 +6,6 @@ local function IsKnownValue(value)
     return value ~= nil and not UUF:IsSecretValue(value)
 end
 
-local function GetKnownClass(unit)
-    local class = select(2, UnitClass(unit))
-    if IsKnownValue(class) then return class end
-end
-
 local function GetKnownReaction(unit)
     local reaction = UnitReaction(unit, "player")
     if IsKnownValue(reaction) then return reaction end
@@ -53,14 +48,10 @@ local function UpdateHealthBarColour(unitFrame, configuredUnit, eventUnit)
 
     if HealthBarDB.ColourByClass then
         local classUnit = configuredUnit == "pet" and "player" or unitToken
-        local isPlayer = GetKnownBool(UnitIsPlayer(classUnit))
-        local isPartyAI = GetKnownBool(UnitInPartyIsAI(classUnit))
-        if isPlayer or isPartyAI or configuredUnit == "pet" then
-            local r, g, b = UUF:GetConfiguredClassColour(GetKnownClass(classUnit), unitFrame, configuredUnit)
-            if r then
-                healthBar:SetStatusBarColor(r, g, b, alpha)
-                return
-            end
+        local hasClassColour, r, g, b = UUF:GetUnitClassColour(classUnit, unitFrame, configuredUnit)
+        if hasClassColour then
+            healthBar:SetStatusBarColor(r, g, b, alpha)
+            return
         end
 
         local reaction = GetKnownReaction(unitToken)
@@ -75,15 +66,18 @@ local function SetHealthBackgroundColour(unitFrame, unit, HealthBarDB, forceUpda
 	local backgroundUnit = unitFrame.unit or unit
 	local deadState = HealthBarDB.ColourBackdropWhenDead and UnitIsDeadOrGhost(backgroundUnit)
 	local isDead = IsKnownValue(deadState) and deadState or false
-	local backgroundClass
+	local backgroundClassR, backgroundClassG, backgroundClassB
 	local backgroundReaction
 	if HealthBarDB.ColourBackgroundByClass then
 		local unitToColour = backgroundUnit ~= "pet" and backgroundUnit or "player"
-		backgroundClass = GetKnownClass(unitToColour)
-		if not backgroundClass then backgroundReaction = GetKnownReaction(unitToColour) end
+		local hasClassColour
+		hasClassColour, backgroundClassR, backgroundClassG, backgroundClassB = UUF:GetUnitClassColour(unitToColour, unitFrame, unit)
+		if not hasClassColour then backgroundReaction = GetKnownReaction(unitToColour) end
 	end
-	if not forceUpdate and unitFrame.HealthBackgroundClass == backgroundClass and unitFrame.HealthBackgroundReaction == backgroundReaction and unitFrame.HealthBackgroundIsDead == isDead then return end
-	unitFrame.HealthBackgroundClass = backgroundClass
+	if not forceUpdate and unitFrame.HealthBackgroundClassR == backgroundClassR and unitFrame.HealthBackgroundClassG == backgroundClassG and unitFrame.HealthBackgroundClassB == backgroundClassB and unitFrame.HealthBackgroundReaction == backgroundReaction and unitFrame.HealthBackgroundIsDead == isDead then return end
+	unitFrame.HealthBackgroundClassR = backgroundClassR
+	unitFrame.HealthBackgroundClassG = backgroundClassG
+	unitFrame.HealthBackgroundClassB = backgroundClassB
 	unitFrame.HealthBackgroundReaction = backgroundReaction
 	unitFrame.HealthBackgroundIsDead = isDead
 

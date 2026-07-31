@@ -14,8 +14,8 @@ local function CreatePowerBarPostUpdateColor(unitFrame, unit)
         local PowerBarDB = UUF:GetUnitDB(unitFrame, unit).PowerBar
         if UUF:UsesRaidClassColours(unitFrame, unit) and PowerBarDB.ColourByClass then
             local unitForClass = unit == "partyplayer" and "player" or unit
-            local r, g, b = UUF:GetConfiguredClassColour(select(2, UnitClass(unitForClass)), unitFrame, unit)
-            if r then element:SetStatusBarColor(r, g, b, PowerBarDB.Foreground[4] or 1) end
+            local hasClassColour, r, g, b = UUF:GetUnitClassColour(unitForClass, unitFrame, unit)
+            if hasClassColour then element:SetStatusBarColor(r, g, b, PowerBarDB.Foreground[4] or 1) end
         end
 
         if not PowerBarDB.ColourBackgroundByType then return end

@@ -521,16 +521,25 @@ function UUF:SetJustification(anchorFrom)
     end
 end
 
-function UUF:GetUnitColour(unit, unitFrame)
-    local isPlayer = UnitIsPlayer(unit)
-    local isPartyAI = UnitInPartyIsAI(unit)
-    if not UUF:IsSecretValue(isPlayer) and not UUF:IsSecretValue(isPartyAI) and (isPlayer or isPartyAI) then
-        local _, class = UnitClass(unit)
-        if not UUF:IsSecretValue(class) then
-            local r, g, b = UUF:GetConfiguredClassColour(class, unitFrame, unit)
-            if r then return r, g, b end
-        end
+function UUF:GetUnitClassColour(unit, unitFrame, configuredUnit)
+    if not unit or configuredUnit ~= "pet" and not (UnitIsPlayer(unit) or UnitTreatAsPlayerForDisplay(unit) or UnitInPartyIsAI(unit)) then return end
+    local success, _, class = pcall(UnitClassFromGUID, UnitGUID(unit))
+    if not success or not class then class = select(2, UnitClass(unit)) end
+    if not class then return end
+
+    if not UUF:IsSecretValue(class) then
+        local r, g, b = UUF:GetConfiguredClassColour(class, unitFrame, configuredUnit or unit)
+        if r then return true, r, g, b end
     end
+
+    local success, color = pcall(C_ClassColor.GetClassColor, class)
+    if success and color then return true, color:GetRGB() end
+end
+
+function UUF:GetUnitColour(unit, unitFrame)
+    local hasClassColour, r, g, b = UUF:GetUnitClassColour(unit, unitFrame, unit)
+    if hasClassColour then return r, g, b end
+
     local reaction = UnitReaction(unit, "player")
     if reaction and not UUF:IsSecretValue(reaction) and UUF.db.profile.General.Colours.Reaction[reaction] then
         local r, g, b = unpack(UUF.db.profile.General.Colours.Reaction[reaction])
@@ -540,11 +549,8 @@ function UUF:GetUnitColour(unit, unitFrame)
 end
 
 function UUF:GetClassColour(unitFrame)
-    local _, class = UnitClass(unitFrame.unit)
-    if not UUF:IsSecretValue(class) then
-        local r, g, b = UUF:GetConfiguredClassColour(class, unitFrame, unitFrame.unit)
-        if r then return {r, g, b, 1} end
-    end
+    local hasClassColour, r, g, b = UUF:GetUnitClassColour(unitFrame.unit, unitFrame, unitFrame.unit)
+    if hasClassColour then return {r, g, b, 1} end
 end
 
 function UUF:GetReactionColour(reaction)
