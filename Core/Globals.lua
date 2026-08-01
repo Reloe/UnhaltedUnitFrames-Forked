@@ -884,3 +884,30 @@ function UUF:RefreshProfiles()
 	UUF:UpdateAllUnitFrames()
 	UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end)
 end
+
+function UUF:GetGlobalProfileName()
+	local globalProfile = UUF.db.global.GlobalProfile
+	if type(globalProfile) == "string" and globalProfile ~= "" then
+		return globalProfile
+	end
+
+	local legacyGlobalProfile = UUF.db.global.GlobalProfileName
+	if type(legacyGlobalProfile) == "string" and legacyGlobalProfile ~= "" then
+		return legacyGlobalProfile
+	end
+
+	return "Default"
+end
+
+function UUF:HandleProfileChanged()
+	if UUF.db.global.UseGlobalProfile then
+		local globalProfile = UUF:GetGlobalProfileName()
+		UUF.db.global.GlobalProfile = globalProfile
+		if UUF.db:GetCurrentProfile() ~= globalProfile then
+			UUF.db:SetProfile(globalProfile)
+			return
+		end
+	end
+
+	UUF:RefreshProfiles()
+end

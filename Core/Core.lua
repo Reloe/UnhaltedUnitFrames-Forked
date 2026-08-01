@@ -8,10 +8,11 @@ function UnhaltedUnitFrames:OnInitialize()
     UUF.SEPARATOR = UUF.db.profile.General.Separator or "||"
     UUF.TOT_SEPARATOR = UUF.db.profile.General.ToTSeparator or "»"
     if UUF.db.global.UseGlobalProfile then
-        local globalProfile = UUF.db.global.GlobalProfile or UUF.db.global.GlobalProfileName or "Default"
+        local globalProfile = UUF:GetGlobalProfileName()
+        UUF.db.global.GlobalProfile = globalProfile
 		UUF.db:SetProfile(globalProfile)
 	end
-	UUF.db.RegisterCallback(UUF, "OnProfileChanged", UUF.RefreshProfiles)
+	UUF.db.RegisterCallback(UUF, "OnProfileChanged", UUF.HandleProfileChanged)
 	UUF.db.RegisterCallback(UUF, "OnProfileCopied", UUF.RefreshProfiles)
 	UUF.db.RegisterCallback(UUF, "OnProfileReset", UUF.RefreshProfiles)
 

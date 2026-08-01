@@ -91,21 +91,82 @@ local function ParseEncodedProfile(encodedInfo)
     return data
 end
 
+local function ValidateProfileTable(profile)
+    if type(profile) ~= "table" or type(profile.General) ~= "table" or type(profile.Units) ~= "table" then
+        return false
+    end
+
+    local tablesBeingValidated = {}
+    local function ValidateTable(source, defaults)
+        if tablesBeingValidated[source] then
+            return false
+        end
+
+        tablesBeingValidated[source] = true
+        for key, value in pairs(source) do
+            local keyType = type(key)
+            local valueType = type(value)
+            if (keyType ~= "string" and keyType ~= "number")
+                or (valueType ~= "table" and valueType ~= "string" and valueType ~= "number" and valueType ~= "boolean") then
+                return false
+            end
+
+            local defaultValue = type(defaults) == "table" and rawget(defaults, key) or nil
+            if defaultValue ~= nil and type(defaultValue) ~= valueType then
+                return false
+            end
+
+            if valueType == "table" and not ValidateTable(value, type(defaultValue) == "table" and defaultValue or nil) then
+                return false
+            end
+        end
+        tablesBeingValidated[source] = nil
+        return true
+    end
+
+    return ValidateTable(profile, UUF:GetDefaultDB().profile)
+end
+
+local function CopyImportedProfile(source, destination)
+    for key, value in pairs(source) do
+        if type(value) == "table" then
+            if type(destination[key]) ~= "table" then
+                destination[key] = {}
+            end
+            CopyImportedProfile(value, destination[key])
+        else
+            destination[key] = value
+        end
+    end
+end
+
 local function ApplyImportedProfileToCurrent(profile)
-    if type(profile) ~= "table" then
-        return
-    end
+    -- Preserve AceDB's active profile reference and fill defaults omitted by older exports.
+    UUF.db:ResetProfile(true, true)
+    CopyImportedProfile(profile, UUF.db.profile)
 
-    wipe(UUF.db.profile)
-    for key, value in pairs(profile) do
-        UUF.db.profile[key] = value
+    UUF:RefreshProfiles()
+    if UUFG.RefreshProfiles then
+        UUFG.RefreshProfiles()
     end
-
-    UUFG.RefreshProfiles()
     local general = UUF.db.profile and UUF.db.profile.General
     local uiScale = general and general.UIScale
     UIParent:SetScale((uiScale and uiScale.Scale) or 1)
     UUF:UpdateAllUnitFrames()
+end
+
+local function ImportProfile(profile, profileName)
+    if not ValidateProfileTable(profile) or type(profileName) ~= "string" or profileName == "" then
+        UUF:PrettyPrint("Invalid Import String.")
+        return false
+    end
+
+    if UUF.db.global.UseGlobalProfile then
+        UUF.db.global.GlobalProfile = profileName
+    end
+    UUF.db:SetProfile(profileName)
+    ApplyImportedProfileToCurrent(profile)
+    return true
 end
 
 function UUF:ExportSavedVariables()
@@ -122,14 +183,13 @@ end
 
 function UUF:ImportSavedVariables(encodedInfo, profileName)
     local data = ParseEncodedProfile(encodedInfo)
-    if not data then
+    if not data or not ValidateProfileTable(data.profile) then
         UUF:PrettyPrint("Invalid Import String.")
         return
     end
 
     if profileName then
-        UUF.db:SetProfile(profileName)
-        ApplyImportedProfileToCurrent(data.profile)
+        ImportProfile(data.profile, profileName)
     else
         StaticPopupDialogs["UUF_IMPORT_NEW_PROFILE"] = {
             text = UUF.ADDON_NAME.." - ".."Profile Name?",
@@ -148,8 +208,7 @@ function UUF:ImportSavedVariables(encodedInfo, profileName)
                     return
                 end
 
-                UUF.db:SetProfile(newProfileName)
-                ApplyImportedProfileToCurrent(data.profile)
+                ImportProfile(data.profile, newProfileName)
             end,
         }
         StaticPopup_Show("UUF_IMPORT_NEW_PROFILE")
@@ -167,13 +226,10 @@ end
 
 function UUFG:ImportUUF(importString, profileKey)
     local profileData = ParseEncodedProfile(importString)
-    if not profileData then
+    if not profileData or not ValidateProfileTable(profileData.profile) then
         UUF:PrettyPrint("Invalid Import String.")
         return
     end
 
-    if type(profileData.profile) == "table" then
-        UUF.db.profiles[profileKey] = profileData.profile
-        UUF.db:SetProfile(profileKey)
-    end
+    ImportProfile(profileData.profile, profileKey)
 end

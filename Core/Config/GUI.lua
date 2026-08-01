@@ -4790,7 +4790,7 @@ local function CreateProfileSettings(containerParent)
     GlobalProfileDropdown:SetRelativeWidth(0.5)
     GlobalProfileDropdown:SetList(profileKeys)
     GlobalProfileDropdown:SetValue((UUF.db.global.GlobalProfile and UUF.db.global.GlobalProfile ~= "" and UUF.db.global.GlobalProfile) or (UUF.db.global.GlobalProfileName and UUF.db.global.GlobalProfileName ~= "" and UUF.db.global.GlobalProfileName) or "Default")
-    GlobalProfileDropdown:SetCallback("OnValueChanged", function(_, _, value) UUF.db:SetProfile(value) UUF.db.global.GlobalProfile = value UUF:SetUIScale() UUF:UpdateAllUnitFrames() RefreshProfiles() end)
+    GlobalProfileDropdown:SetCallback("OnValueChanged", function(_, _, value) UUF.db.global.GlobalProfile = value UUF.db:SetProfile(value) UUF:SetUIScale() UUF:UpdateAllUnitFrames() RefreshProfiles() end)
     ProfileContainer:AddChild(GlobalProfileDropdown)
 
     local SpecProfileContainer = GUIWidgets.CreateInlineGroup(ProfileContainer, "Specialization Profiles")
