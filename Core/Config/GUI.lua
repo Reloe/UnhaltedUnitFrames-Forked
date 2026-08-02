@@ -104,6 +104,7 @@ local CooldownBreakpointSettings = {
 
 local AnchorPoints = { { ["TOPLEFT"] = "Top Left", ["TOP"] = "Top", ["TOPRIGHT"] = "Top Right", ["LEFT"] = "Left", ["CENTER"] = "Center", ["RIGHT"] = "Right", ["BOTTOMLEFT"] = "Bottom Left", ["BOTTOM"] = "Bottom", ["BOTTOMRIGHT"] = "Bottom Right" }, { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT", } }
 local AuraAnchorParents = {{Frame = "Unit Frame", Health = "Health Bar"}, {"Frame", "Health"}}
+local CandidateFilterStates = {{ignore = "Nil (Ignore)", ["true"] = "True", ["false"] = "False"}, {"ignore", "true", "false"}}
 local FrameStrataList = {{ ["BACKGROUND"] = "Background", ["LOW"] = "Low", ["MEDIUM"] = "Medium", ["HIGH"] = "High", ["DIALOG"] = "Dialog", ["FULLSCREEN"] = "Fullscreen", ["FULLSCREEN_DIALOG"] = "Fullscreen Dialog", ["TOOLTIP"] = "Tooltip" }, { "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" }}
 local TopBottomList = {{ ["TOP"] = "Top", ["BOTTOM"] = "Bottom" }, { "TOP", "BOTTOM" }}
 local ClassOrder = {"WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "DEATHKNIGHT", "SHAMAN", "MAGE", "WARLOCK", "MONK", "DRUID", "DEMONHUNTER", "EVOKER"}
@@ -3707,6 +3708,39 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
         end
         FilterContainer:AddChild(FilterDropdown)
     end
+
+	local CandidateFilterContainer = GUIWidgets.CreateInlineGroup(SettingsTabs, "Candidate Filters")
+	GUIWidgets.CreateInformationTag(CandidateFilterContainer, "|cFF8080FFNil|r leaves the property unrestricted. |cFF8080FFTrue|r requires it and |cFF8080FFFalse|r requires its inverse. All configured candidate filters must match.")
+	for _, candidateFilter in ipairs(UUF.AURA_CANDIDATE_FILTERS) do
+		local candidateFilterKey = candidateFilter.Key
+		local candidateFilterTitle = candidateFilter.Title
+		local candidateFilterDescription = candidateFilter.Desc
+		local CandidateFilterDropdown = AG:Create("Dropdown")
+		local value = AuraDB.CandidateFilters and AuraDB.CandidateFilters[candidateFilterKey]
+		CandidateFilterDropdown:SetList(CandidateFilterStates[1], CandidateFilterStates[2])
+		CandidateFilterDropdown:SetLabel(candidateFilterTitle)
+		CandidateFilterDropdown:SetValue(value == true and "true" or value == false and "false" or "ignore")
+		CandidateFilterDropdown:SetRelativeWidth(0.5)
+		CandidateFilterDropdown:SetCallback("OnValueChanged", function(_, _, selectedValue)
+			AuraDB.CandidateFilters = AuraDB.CandidateFilters or {}
+			if selectedValue == "true" then
+				AuraDB.CandidateFilters[candidateFilterKey] = true
+			elseif selectedValue == "false" then
+				AuraDB.CandidateFilters[candidateFilterKey] = false
+			else
+				AuraDB.CandidateFilters[candidateFilterKey] = nil
+			end
+			UpdateAuras()
+		end)
+		CandidateFilterDropdown:SetCallback("OnEnter", function()
+			GameTooltip:SetOwner(CandidateFilterDropdown.frame, "ANCHOR_CURSOR_RIGHT")
+			GameTooltip:AddLine(candidateFilterTitle, 1, 1, 1)
+			GameTooltip:AddLine(candidateFilterDescription, nil, nil, nil, true)
+			GameTooltip:Show()
+		end)
+		CandidateFilterDropdown:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+		CandidateFilterContainer:AddChild(CandidateFilterDropdown)
+	end
 
     local SpellIDContainer = GUIWidgets.CreateInlineGroup(SettingsTabs, "SpellID Filters")
 	local SpellIDInformation = AG:Create("InteractiveLabel")

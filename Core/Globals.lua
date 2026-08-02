@@ -857,6 +857,18 @@ UUF.AURA_FILTERS = {
 	{Key = "NotCancelable", Token = "!CANCELABLE", Source = "!PLAYER", Group = "Others (Not You)", Title = "Not Cancelable", Desc = "Auras the player cannot cancel."},
 }
 
+UUF.AURA_CANDIDATE_FILTERS = {
+	{Key = "isFromPlayerOrPlayerPet", Title = "From Player or Pet", Desc = "Whether the aura was cast by the player or the player's pet."},
+	{Key = "isRoleAura", Title = "Role Aura", Desc = "Whether Blizzard classifies the aura as relevant to the unit's assigned role."},
+	{Key = "isPriorityAura", Title = "Priority Aura", Desc = "Whether Blizzard classifies the aura as a priority debuff."},
+	{Key = "isStealable", Title = "Stealable", Desc = "Whether the aura can be stolen."},
+	{Key = "nameplateShowAll", Title = "Nameplate: Show All", Desc = "Whether the aura is flagged to show on all nameplates."},
+	{Key = "nameplateShowPersonal", Title = "Nameplate: Personal", Desc = "Whether the aura is flagged to show on the personal nameplate."},
+	{Key = "canApplyAura", Title = "Can Apply Aura", Desc = "Whether the player can apply this aura."},
+	{Key = "isBossAura", Title = "Boss Aura", Desc = "Whether Blizzard classifies the aura as a boss aura."},
+	{Key = "isBossOrRoleAura", Title = "Boss or Role Aura", Desc = "Whether Blizzard classifies the aura as either a boss aura or a role aura."},
+}
+
 UUF.SCMAnchors = {
     ["Player"] = "UUF_Player",
     ["Target"] = "UUF_Target",

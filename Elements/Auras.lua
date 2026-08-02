@@ -417,17 +417,7 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	end
 	local auraType = AuraDB.Type == "Debuffs" and "HARMFUL" or "HELPFUL"
 	local hasSpellIDs = next(AuraDB.SpellIDs)
-	local raidCandidateFilters
-	local spellIDCandidateFilters
-	if UUF:GetNormalizedUnit(unit) == "raid" then
-		raidCandidateFilters = {excludeSpellIDs = RaidAuraExcludedSpellIDs}
-	end
-	if hasSpellIDs then
-		spellIDCandidateFilters = {
-			includeSpellIDs = AuraDB.SpellIDs,
-			excludeSpellIDs = raidCandidateFilters and RaidAuraExcludedSpellIDs or nil,
-		}
-	end
+	local excludeRaidAuras = UUF:GetNormalizedUnit(unit) == "raid"
 	state.Size = AuraDB.Size
 	container.size = AuraDB.Size
 	local DurationDB = GetAuraDurationDB(unitFrame, unit, AuraDB)
@@ -476,7 +466,14 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	local sortDirection = reverse and AuraContainerSortDirection.Reverse or AuraContainerSortDirection.Normal
 	for _, filter in ipairs(filters) do
 		local groupKey = state.Groups[filter]
-		local groupCandidateFilters = activeSpellIDGroups[filter] and spellIDCandidateFilters or raidCandidateFilters
+		local groupCandidateFilters = {}
+		for _, candidateFilter in ipairs(UUF.AURA_CANDIDATE_FILTERS) do
+			local value = AuraDB.CandidateFilters and AuraDB.CandidateFilters[candidateFilter.Key]
+			if type(value) == "boolean" then groupCandidateFilters[candidateFilter.Key] = value end
+		end
+		if activeSpellIDGroups[filter] then groupCandidateFilters.includeSpellIDs = AuraDB.SpellIDs end
+		if excludeRaidAuras then groupCandidateFilters.excludeSpellIDs = RaidAuraExcludedSpellIDs end
+		if not next(groupCandidateFilters) then groupCandidateFilters = nil end
 		if not groupKey then
 			container.size = state.Size
 			groupKey = container:AddGroup(filter, {
