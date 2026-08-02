@@ -10,6 +10,7 @@ function UUF:CreateUnitReadyCheckIndicator(unitFrame, unit)
 	ReadyCheckIndicator.readyTexture = UUF.ReadyCheckTextures[ReadyCheckDB.Texture] and UUF.ReadyCheckTextures[ReadyCheckDB.Texture]["READY"]
 	ReadyCheckIndicator.notReadyTexture = UUF.ReadyCheckTextures[ReadyCheckDB.Texture] and UUF.ReadyCheckTextures[ReadyCheckDB.Texture]["NOTREADY"]
 	ReadyCheckIndicator.waitingTexture = UUF.ReadyCheckTextures[ReadyCheckDB.Texture] and UUF.ReadyCheckTextures[ReadyCheckDB.Texture]["WAITING"]
+	unitFrame.UUFReadyCheckIndicator = ReadyCheckIndicator
 
 	if ReadyCheckDB.Enabled then
 		unitFrame.ReadyCheckIndicator = ReadyCheckIndicator
@@ -25,7 +26,7 @@ function UUF:UpdateUnitReadyCheckIndicator(unitFrame, unit)
 	if not ReadyCheckDB then return end
 
 	if ReadyCheckDB.Enabled then
-		unitFrame.ReadyCheckIndicator = unitFrame.ReadyCheckIndicator or UUF:CreateUnitReadyCheckIndicator(unitFrame, unit)
+		unitFrame.ReadyCheckIndicator = unitFrame.ReadyCheckIndicator or unitFrame.UUFReadyCheckIndicator or UUF:CreateUnitReadyCheckIndicator(unitFrame, unit)
 		if not unitFrame:IsElementEnabled("ReadyCheckIndicator") then unitFrame:EnableElement("ReadyCheckIndicator", UUF:GetNormalizedUnit(unit)) end
 
 		unitFrame.ReadyCheckIndicator:ClearAllPoints()

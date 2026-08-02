@@ -71,6 +71,7 @@ function UUF:CreateUnitAFKDNDIndicator(unitFrame, unit)
 		Indicator:SetShadowColor(0, 0, 0, 0)
 		Indicator:SetShadowOffset(0, 0)
 	end
+	unitFrame.UUFAFKDNDIndicator = Indicator
 	unitFrame.AFKDNDIndicator = Indicator
 	UUF:UpdateUnitAFKDNDIndicator(unitFrame, unit)
 	return Indicator
@@ -84,7 +85,7 @@ function UUF:UpdateUnitAFKDNDIndicator(unitFrame, unit)
 	end
 	local IndicatorDB = UUF:GetAFKDNDIndicatorDB(unitFrame, unit)
 	if IndicatorDB.Enabled then
-		unitFrame.AFKDNDIndicator = unitFrame.AFKDNDIndicator or UUF:CreateUnitAFKDNDIndicator(unitFrame, unit)
+		unitFrame.AFKDNDIndicator = unitFrame.AFKDNDIndicator or unitFrame.UUFAFKDNDIndicator or UUF:CreateUnitAFKDNDIndicator(unitFrame, unit)
 		local FontsDB = UUF:GetFontSettings(unitFrame, unit)
 		local FontMedia = UUF:GetFontMedia(unitFrame, unit)
 		unitFrame.AFKDNDIndicator:ClearAllPoints()

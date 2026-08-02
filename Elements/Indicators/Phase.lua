@@ -13,6 +13,7 @@ function UUF:CreateUnitPhaseIndicator(unitFrame, unit)
 	local Icon = PhaseIndicator:CreateTexture(nil, "OVERLAY")
 	Icon:SetAllPoints()
 	PhaseIndicator.Icon = Icon
+	unitFrame.UUFPhaseIndicator = PhaseIndicator
 
 	if PhaseDB.Enabled then
 		unitFrame.PhaseIndicator = PhaseIndicator
@@ -28,7 +29,7 @@ function UUF:UpdateUnitPhaseIndicator(unitFrame, unit)
 	if not PhaseDB then return end
 
 	if PhaseDB.Enabled then
-		unitFrame.PhaseIndicator = unitFrame.PhaseIndicator or UUF:CreateUnitPhaseIndicator(unitFrame, unit)
+		unitFrame.PhaseIndicator = unitFrame.PhaseIndicator or unitFrame.UUFPhaseIndicator or UUF:CreateUnitPhaseIndicator(unitFrame, unit)
 		if not unitFrame:IsElementEnabled("PhaseIndicator") then unitFrame:EnableElement("PhaseIndicator") end
 
 		unitFrame.PhaseIndicator:ClearAllPoints()

@@ -29,7 +29,7 @@ function UUF:CreateUnitAlternativePowerBar(unitFrame, unit)
     AlternativePowerBar:SetBackdropBorderColor(0, 0, 0, 1)
     AlternativePowerBar:SetFrameLevel(unitContainer:GetFrameLevel() + 5)
 
-    AlternativePowerBar.Status = CreateFrame("StatusBar", UUF:FetchFrameName(unit).."_AlternativePowerBar", AlternativePowerBar)
+    AlternativePowerBar.Status = CreateFrame("StatusBar", UUF:FetchFrameName(unit).."_AlternativePowerBarStatus", AlternativePowerBar)
     AlternativePowerBar.Status:SetPoint("TOPLEFT", AlternativePowerBar, "TOPLEFT", 1, -1)
     AlternativePowerBar.Status:SetPoint("BOTTOMRIGHT", AlternativePowerBar, "BOTTOMRIGHT", -1, 1)
     AlternativePowerBar.Status:SetSize(AlternativePowerBarDB.Width, AlternativePowerBarDB.Height)
@@ -95,7 +95,6 @@ function UUF:UpdateUnitAlternativePowerBar(unitFrame, unit)
     end
 
     if AlternativePowerBarDB.Enabled and UUF:RequiresAlternativePowerBar() then
-        AlternativePowerBar:Show()
         AlternativePowerBar:Show()
         AlternativePowerBar:RegisterEvent("PLAYER_ENTERING_WORLD")
         for _, event in ipairs(ALTERNATIVE_POWER_BAR_EVENTS) do

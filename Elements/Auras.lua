@@ -436,7 +436,6 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	container.showDebuffBorder = AuraDB.ShowType == true
 	container.borderStyle = AuraButtonBorderStyle.Color
 	container.durationFormatter = GetAuraDurationFormatter(DurationDB)
-	ApplyAuraContainerTextStyle(container, unitFrame, unit, AuraDB, DurationDB)
 	local filters, playerTokens, otherTokens, showAllPlayer, showAllOthers = GetAuraFilters(AuraDB, auraType)
 	local hasAuraFilters = #filters > 0
 	local activeSpellIDGroups = {}

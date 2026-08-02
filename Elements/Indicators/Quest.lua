@@ -18,6 +18,7 @@ function UUF:CreateUnitQuestIndicator(unitFrame, unit)
     QuestIndicator:SetPoint(QuestIndicatorDB.Layout[1], unitFrame.HighLevelContainer, QuestIndicatorDB.Layout[2], QuestIndicatorDB.Layout[3], QuestIndicatorDB.Layout[4])
     QuestIndicator.PostUpdate = UpdateQuestTexture
     UpdateQuestTexture(QuestIndicator)
+    unitFrame.UUFQuestUnitIndicator = QuestIndicator
 
     if QuestIndicatorDB.Enabled then
         unitFrame.QuestUnitIndicator = QuestIndicator
@@ -34,7 +35,7 @@ function UUF:UpdateUnitQuestIndicator(unitFrame, unit)
     local QuestIndicatorDB = UUF.db.profile.Units[UUF:GetNormalizedUnit(unit)].Indicators.Quest
 
     if QuestIndicatorDB.Enabled then
-        unitFrame.QuestUnitIndicator = unitFrame.QuestUnitIndicator or UUF:CreateUnitQuestIndicator(unitFrame, unit)
+        unitFrame.QuestUnitIndicator = unitFrame.QuestUnitIndicator or unitFrame.UUFQuestUnitIndicator or UUF:CreateUnitQuestIndicator(unitFrame, unit)
 
         if not unitFrame:IsElementEnabled("QuestUnitIndicator") then unitFrame:EnableElement("QuestUnitIndicator") end
 

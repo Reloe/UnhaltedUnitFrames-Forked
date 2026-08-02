@@ -49,7 +49,7 @@ function UUF:CreateUnitPortrait(unitFrame, unit)
 	local portraitStyle = PortraitDB.Style or "2D"
 
 	if portraitStyle == "3D" then
-		local portraitBackdrop = CreateFrame("Frame", UUF:FetchFrameName(unit) .. "_PortraitBackdrop", unitFrame.HighLevelContainer, "BackdropTemplate")
+		local portraitBackdrop = CreateFrame("Frame", UUF:FetchFrameName(unit) .. "_Portrait3DBackdrop", unitFrame.HighLevelContainer, "BackdropTemplate")
 		portraitBackdrop:SetSize(PortraitDB.Width, PortraitDB.Height)
 		portraitBackdrop:SetPoint(PortraitDB.Layout[1], unitFrame.HighLevelContainer, PortraitDB.Layout[2], PortraitDB.Layout[3], PortraitDB.Layout[4])
 		portraitBackdrop:SetBackdrop(UUF.BACKDROP)
@@ -69,12 +69,13 @@ function UUF:CreateUnitPortrait(unitFrame, unit)
 		unitPortrait.Fallback:SetTexCoord((PortraitDB.Zoom or 0) * 0.5, 1 - (PortraitDB.Zoom or 0) * 0.5, (PortraitDB.Zoom or 0) * 0.5, 1 - (PortraitDB.Zoom or 0) * 0.5)
 		unitPortrait.Fallback:Hide()
 
-		unitPortrait.Border = CreateFrame("Frame", UUF:FetchFrameName(unit) .. "_PortraitBorder", portraitBackdrop, "BackdropTemplate")
+		unitPortrait.Border = CreateFrame("Frame", UUF:FetchFrameName(unit) .. "_Portrait3DBorder", portraitBackdrop, "BackdropTemplate")
 		unitPortrait.Border:SetAllPoints(portraitBackdrop)
 		unitPortrait.Border:SetBackdrop(UUF.BACKDROP)
 		unitPortrait.Border:SetBackdropColor(0, 0, 0, 0)
 		unitPortrait.Border:SetBackdropBorderColor(0, 0, 0, 1)
 		unitPortrait.Border:SetFrameLevel(portraitBackdrop:GetFrameLevel() + 10)
+		unitFrame.UUFPortrait3D = unitPortrait
 
 		if PortraitDB.Enabled then
 			unitFrame.Portrait = unitPortrait
@@ -90,7 +91,7 @@ function UUF:CreateUnitPortrait(unitFrame, unit)
 		return unitPortrait
 	end
 
-	local portraitBackdrop = CreateFrame("Frame", UUF:FetchFrameName(unit) .. "_PortraitBackdrop", unitFrame.HighLevelContainer, "BackdropTemplate")
+	local portraitBackdrop = CreateFrame("Frame", UUF:FetchFrameName(unit) .. "_Portrait2DBackdrop", unitFrame.HighLevelContainer, "BackdropTemplate")
 	portraitBackdrop:SetSize(PortraitDB.Width, PortraitDB.Height)
 	portraitBackdrop:SetPoint(PortraitDB.Layout[1], unitFrame.HighLevelContainer, PortraitDB.Layout[2], PortraitDB.Layout[3], PortraitDB.Layout[4])
 	portraitBackdrop:SetBackdrop(UUF.BACKDROP)
@@ -103,12 +104,13 @@ function UUF:CreateUnitPortrait(unitFrame, unit)
 	unitPortrait.showClass = PortraitDB.UseClassPortrait
 	unitPortrait.Backdrop = portraitBackdrop
 
-	unitPortrait.Border = CreateFrame("Frame", UUF:FetchFrameName(unit) .. "_PortraitBorder", portraitBackdrop, "BackdropTemplate")
+	unitPortrait.Border = CreateFrame("Frame", UUF:FetchFrameName(unit) .. "_Portrait2DBorder", portraitBackdrop, "BackdropTemplate")
 	unitPortrait.Border:SetAllPoints(portraitBackdrop)
 	unitPortrait.Border:SetBackdrop(UUF.BACKDROP)
 	unitPortrait.Border:SetBackdropColor(0, 0, 0, 0)
 	unitPortrait.Border:SetBackdropBorderColor(0, 0, 0, 1)
 	unitPortrait.Border:SetFrameLevel(portraitBackdrop:GetFrameLevel() + 10)
+	unitFrame.UUFPortrait2D = unitPortrait
 
 	if PortraitDB.Enabled then
 		unitFrame.Portrait = unitPortrait
@@ -133,20 +135,20 @@ function UUF:UpdateUnitPortrait(unitFrame, unit)
 		if unitFrame.Portrait and ((portraitStyle == "3D" and not isPlayerModel) or (portraitStyle ~= "3D" and (isPlayerModel or not unitFrame.Portrait.Backdrop))) then
 			if unitFrame:IsElementEnabled("Portrait") then unitFrame:DisableElement("Portrait") end
 			unitFrame.Portrait.Border:Hide()
-			unitFrame.Portrait.Border = nil
 			if unitFrame.Portrait.Backdrop then
 				unitFrame.Portrait.Backdrop:Hide()
-				unitFrame.Portrait.Backdrop = nil
 			end
 			if unitFrame.Portrait.Fallback then
 				unitFrame.Portrait.Fallback:Hide()
-				unitFrame.Portrait.Fallback = nil
 			end
 			unitFrame.Portrait:Hide()
 			unitFrame.Portrait = nil
 		end
 
-		if not unitFrame.Portrait then unitFrame.Portrait = UUF:CreateUnitPortrait(unitFrame, unit) end
+		if not unitFrame.Portrait then
+			unitFrame.Portrait = portraitStyle == "3D" and unitFrame.UUFPortrait3D or unitFrame.UUFPortrait2D
+			unitFrame.Portrait = unitFrame.Portrait or UUF:CreateUnitPortrait(unitFrame, unit)
+		end
 		if not unitFrame:IsElementEnabled("Portrait") then unitFrame:EnableElement("Portrait") end
 
 		if unitFrame.Portrait:IsObjectType("PlayerModel") then
@@ -173,12 +175,13 @@ function UUF:UpdateUnitPortrait(unitFrame, unit)
 		unitFrame.Portrait.Border:Show()
 		unitFrame.Portrait:ForceUpdate()
 	else
-		if not unitFrame.Portrait then return end
-		if unitFrame:IsElementEnabled("Portrait") then unitFrame:DisableElement("Portrait") end
-		unitFrame.Portrait:Hide()
-		unitFrame.Portrait.Border:Hide()
-		if unitFrame.Portrait.Fallback then unitFrame.Portrait.Fallback:Hide() end
-		if unitFrame.Portrait.Backdrop then unitFrame.Portrait.Backdrop:Hide() end
+		local portrait = unitFrame.Portrait or (portraitStyle == "3D" and unitFrame.UUFPortrait3D or unitFrame.UUFPortrait2D)
+		if not portrait then return end
+		if unitFrame.Portrait and unitFrame:IsElementEnabled("Portrait") then unitFrame:DisableElement("Portrait") end
+		portrait:Hide()
+		portrait.Border:Hide()
+		if portrait.Fallback then portrait.Fallback:Hide() end
+		if portrait.Backdrop then portrait.Backdrop:Hide() end
 		unitFrame.Portrait = nil
 	end
 end

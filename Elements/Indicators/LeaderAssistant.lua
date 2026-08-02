@@ -11,6 +11,8 @@ function UUF:CreateUnitLeaderAssistantIndicator(unitFrame, unit)
         local Assistant = unitFrame.HighLevelContainer:CreateTexture(UUF:FetchFrameName(unit) .. "_AssistantIndicator", "OVERLAY")
         Assistant:SetSize(LeaderAssistantDB.Size, LeaderAssistantDB.Size)
         Assistant:SetPoint(LeaderAssistantDB.Layout[1], unitFrame.HighLevelContainer, LeaderAssistantDB.Layout[2], LeaderAssistantDB.Layout[3], LeaderAssistantDB.Layout[4])
+        unitFrame.UUFLeaderIndicator = Leader
+        unitFrame.UUFAssistantIndicator = Assistant
 
         if LeaderAssistantDB.Enabled then
             unitFrame.LeaderIndicator = Leader
@@ -27,8 +29,11 @@ function UUF:UpdateUnitLeaderAssistantIndicator(unitFrame, unit)
     local LeaderAssistantDB = UUF:GetUnitDB(unitFrame, unit).Indicators.LeaderAssistantIndicator
 
     if LeaderAssistantDB.Enabled then
-        unitFrame.LeaderIndicator = unitFrame.LeaderIndicator or UUF:CreateUnitLeaderAssistantIndicator(unitFrame, unit)
-        unitFrame.AssistantIndicator = unitFrame.AssistantIndicator or UUF:CreateUnitLeaderAssistantIndicator(unitFrame, unit)
+        if not unitFrame.UUFLeaderIndicator or not unitFrame.UUFAssistantIndicator then
+            UUF:CreateUnitLeaderAssistantIndicator(unitFrame, unit)
+        end
+        unitFrame.LeaderIndicator = unitFrame.UUFLeaderIndicator
+        unitFrame.AssistantIndicator = unitFrame.UUFAssistantIndicator
 
         if not unitFrame:IsElementEnabled("LeaderIndicator") then unitFrame:EnableElement("LeaderIndicator") end
         if not unitFrame:IsElementEnabled("AssistantIndicator") then unitFrame:EnableElement("AssistantIndicator") end

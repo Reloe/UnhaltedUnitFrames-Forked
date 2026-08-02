@@ -20,6 +20,7 @@ function UUF:CreateUnitClassificationIndicator(unitFrame, unit)
 	ClassificationIndicator:SetSize(ClassificationIndicatorDB.Size, ClassificationIndicatorDB.Size)
 	ClassificationIndicator:SetPoint(ClassificationIndicatorDB.Layout[1], unitFrame.HighLevelContainer, ClassificationIndicatorDB.Layout[2], ClassificationIndicatorDB.Layout[3], ClassificationIndicatorDB.Layout[4])
 	ClassificationIndicator.PostUpdate = UpdateClassificationTexture
+	unitFrame.UUFClassificationIndicator = ClassificationIndicator
 
 	if ClassificationIndicatorDB.Enabled then
 		unitFrame.ClassificationIndicator = ClassificationIndicator
@@ -34,7 +35,7 @@ function UUF:UpdateUnitClassificationIndicator(unitFrame, unit)
 	local ClassificationIndicatorDB = UUF.db.profile.Units.target.Indicators.Classification
 
 	if ClassificationIndicatorDB.Enabled then
-		unitFrame.ClassificationIndicator = unitFrame.ClassificationIndicator or UUF:CreateUnitClassificationIndicator(unitFrame, unit)
+		unitFrame.ClassificationIndicator = unitFrame.ClassificationIndicator or unitFrame.UUFClassificationIndicator or UUF:CreateUnitClassificationIndicator(unitFrame, unit)
 		if not unitFrame:IsElementEnabled("ClassificationIndicator") then unitFrame:EnableElement("ClassificationIndicator") end
 
 		unitFrame.ClassificationIndicator:ClearAllPoints()

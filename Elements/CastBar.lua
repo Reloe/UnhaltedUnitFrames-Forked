@@ -113,15 +113,13 @@ function UUF:CreateUnitCastBar(unitFrame, unit)
         CastBar:SetReverseFill(false)
     end
 
-    if CastBarDB.Enabled then
-        unitFrame.Castbar = CastBar
-        unitFrame.Castbar.Text = SpellNameText
-        unitFrame.Castbar.Time = DurationText
-        if CastBarDB.Icon.Enabled then unitFrame.Castbar.Icon = CastBar.Icon else unitFrame.Castbar.Icon = nil end
-        unitFrame.Castbar:HookScript("OnValueChanged", function(self, value) if self.Castbar then self.Castbar:SetValue(value) end end)
-        unitFrame.Castbar:HookScript("OnHide", function() CastBarContainer:Hide() end)
+    CastBar.Text = SpellNameText
+    CastBar.Time = DurationText
+    CastBar.UUFIcon = CastBar.Icon
+    CastBar:HookScript("OnValueChanged", function(self, value) if self.Castbar then self.Castbar:SetValue(value) end end)
+    CastBar:HookScript("OnHide", function() CastBarContainer:Hide() end)
 
-        unitFrame.Castbar.PostCastStart = function(frameCastBar)
+    CastBar.PostCastStart = function(frameCastBar)
 			local currentCastBarDB = UUF:GetUnitDB(unitFrame, unit).CastBar
 			local currentSpellNameDB = currentCastBarDB.Text.SpellName
 			SetCastBarColour(frameCastBar, unit, currentCastBarDB)
@@ -142,25 +140,27 @@ function UUF:CreateUnitCastBar(unitFrame, unit)
 
             if frameCastBar.NotInterruptibleOverlay and frameCastBar.notInterruptible ~= nil then frameCastBar.NotInterruptibleOverlay:SetAlphaFromBoolean(frameCastBar.notInterruptible, 1, 0) end
             CastBarContainer:Show()
-        end
+    end
 
-        unitFrame.Castbar.PostCastInterruptible = function(frameCastBar)
-            if frameCastBar.NotInterruptibleOverlay and frameCastBar.notInterruptible ~= nil then frameCastBar.NotInterruptibleOverlay:SetAlphaFromBoolean(frameCastBar.notInterruptible, 1, 0) end
+    CastBar.PostCastInterruptible = function(frameCastBar)
+        if frameCastBar.NotInterruptibleOverlay and frameCastBar.notInterruptible ~= nil then frameCastBar.NotInterruptibleOverlay:SetAlphaFromBoolean(frameCastBar.notInterruptible, 1, 0) end
 			SetCastBarColour(frameCastBar, unit, UUF:GetUnitDB(unitFrame, unit).CastBar)
-        end
-        unitFrame.Castbar.PostCastFail = function(frameCastBar)
+    end
+    CastBar.PostCastFail = function(frameCastBar)
 			frameCastBar:SetStatusBarColor(unpack(UUF:GetUnitDB(unitFrame, unit).CastBar.InterruptedFailedColour))
-            if frameCastBar.NotInterruptibleOverlay then frameCastBar.NotInterruptibleOverlay:SetAlpha(0) end
-        end
-        unitFrame.Castbar.PostCastInterrupted = unitFrame.Castbar.PostCastFail
-        if SpellNameDB.Enabled then unitFrame.Castbar.Text:SetAlpha(1) else unitFrame.Castbar.Text:SetAlpha(0) end
-        if DurationDB.Enabled then unitFrame.Castbar.Time:SetAlpha(1) else unitFrame.Castbar.Time:SetAlpha(0) end
+        if frameCastBar.NotInterruptibleOverlay then frameCastBar.NotInterruptibleOverlay:SetAlpha(0) end
+    end
+    CastBar.PostCastInterrupted = CastBar.PostCastFail
+    unitFrame.UUFCastbar = CastBar
+
+    if CastBarDB.Enabled then
+        unitFrame.Castbar = CastBar
+        if not CastBarDB.Icon.Enabled then CastBar.Icon = nil end
+        if SpellNameDB.Enabled then CastBar.Text:SetAlpha(1) else CastBar.Text:SetAlpha(0) end
+        if DurationDB.Enabled then CastBar.Time:SetAlpha(1) else CastBar.Time:SetAlpha(0) end
     else
         CastBarContainer:Hide()
-        if not unitFrame.Castbar then return end
-        if unitFrame:IsElementEnabled("Castbar") then unitFrame:DisableElement("Castbar") end
-        unitFrame.Castbar:Hide()
-        unitFrame.Castbar = nil
+        CastBar:Hide()
     end
 
     return CastBar
@@ -170,10 +170,10 @@ function UUF:UpdateUnitCastBar(unitFrame, unit)
     local GeneralDB = UUF.db.profile.General
     local FrameDB = UUF.db.profile.Units[UUF:GetNormalizedUnit(unit)].Frame
     local CastBarDB = UUF.db.profile.Units[UUF:GetNormalizedUnit(unit)].CastBar
-    local CastBarContainer = unitFrame.Castbar and unitFrame.Castbar:GetParent()
+    local CastBarContainer = (unitFrame.Castbar or unitFrame.UUFCastbar) and (unitFrame.Castbar or unitFrame.UUFCastbar):GetParent()
 
     if CastBarDB.Enabled then
-        unitFrame.Castbar = unitFrame.Castbar or UUF:CreateUnitCastBar(unitFrame, unit)
+        unitFrame.Castbar = unitFrame.Castbar or unitFrame.UUFCastbar or UUF:CreateUnitCastBar(unitFrame, unit)
         CastBarContainer = unitFrame.Castbar and unitFrame.Castbar:GetParent()
 
         if not unitFrame:IsElementEnabled("Castbar") then unitFrame:EnableElement("Castbar") end
@@ -213,7 +213,7 @@ function UUF:UpdateUnitCastBar(unitFrame, unit)
             end
 
             if CastBarDB.Icon.Enabled then
-                unitFrame.Castbar.Icon = unitFrame.Castbar.Icon or unitFrame.Castbar:CreateTexture(UUF:FetchFrameName(unit) .. "_CastBarIcon", "ARTWORK")
+                unitFrame.Castbar.Icon = unitFrame.Castbar.UUFIcon
                 unitFrame.Castbar.Icon:SetSize(CastBarDB.Height - 2, CastBarDB.Height - 2)
                 unitFrame.Castbar.Icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
                 unitFrame.Castbar.Icon:ClearAllPoints()
@@ -277,9 +277,10 @@ function UUF:UpdateUnitCastBar(unitFrame, unit)
             end
         end
     else
-        if not unitFrame.Castbar then return end
-        if unitFrame:IsElementEnabled("Castbar") then unitFrame:DisableElement("Castbar") end
-        unitFrame.Castbar:Hide()
+        local castBar = unitFrame.Castbar or unitFrame.UUFCastbar
+        if not castBar then return end
+        if unitFrame.Castbar and unitFrame:IsElementEnabled("Castbar") then unitFrame:DisableElement("Castbar") end
+        castBar:Hide()
         unitFrame.Castbar = nil
         if CastBarContainer then
             CastBarContainer:Hide()

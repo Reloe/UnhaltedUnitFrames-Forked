@@ -365,9 +365,14 @@ oUF.Tags.Methods["curpp:manapercent"] = function(unit)
     end
 end
 
+local function IsKnownHealer(unit)
+    local role = UnitGroupRolesAssigned(unit)
+    return not UUF:IsSecretValue(role) and role == "HEALER"
+end
+
 oUF.Tags.Methods["curpp:manapercent:healer"] = function(unit)
     if not unit or not UnitExists(unit) then return "" end
-    if UnitGroupRolesAssigned(unit) ~= "HEALER" then return "" end
+    if not IsKnownHealer(unit) then return "" end
     local unitPower = UnitPower(unit, Enum.PowerType.Mana)
     if unitPower then
         local powerPercent = UnitPowerPercent(unit, Enum.PowerType.Mana, true, CurveConstants.ScaleTo100)
@@ -377,7 +382,7 @@ end
 
 oUF.Tags.Methods["curpp:manapercent:healer:colour"] = function(unit)
     if not unit then return end
-    if UnitGroupRolesAssigned(unit) ~= "HEALER" then return end
+    if not IsKnownHealer(unit) then return end
     local unitPower = UnitPower(unit, Enum.PowerType.Mana)
     if unitPower then
         local powerPercent = UnitPowerPercent(unit, Enum.PowerType.Mana, true, CurveConstants.ScaleTo100)
@@ -391,7 +396,7 @@ end
 
 oUF.Tags.Methods["curpp:manapercent-with-sign:healer"] = function(unit)
     if not unit or not UnitExists(unit) then return "" end
-    if UnitGroupRolesAssigned(unit) ~= "HEALER" then return "" end
+    if not IsKnownHealer(unit) then return "" end
     local unitPower = UnitPower(unit, Enum.PowerType.Mana)
     if unitPower then
         local powerPercent = UnitPowerPercent(unit, Enum.PowerType.Mana, true, CurveConstants.ScaleTo100)
@@ -401,7 +406,7 @@ end
 
 oUF.Tags.Methods["curpp:manapercent-with-sign:healer:colour"] = function(unit)
     if not unit then return end
-    if UnitGroupRolesAssigned(unit) ~= "HEALER" then return end
+    if not IsKnownHealer(unit) then return end
     local unitPower = UnitPower(unit, Enum.PowerType.Mana)
     if unitPower then
         local powerPercent = UnitPowerPercent(unit, Enum.PowerType.Mana, true, CurveConstants.ScaleTo100)
@@ -520,6 +525,7 @@ end
 
 oUF.Tags.Methods["reactioncolour"] = function(unit)
     local unitReaction = UnitReaction(unit, "player")
+    if UUF:IsSecretValue(unitReaction) then return "|cFFFFFFFF" end
     local reactionColour = unitReaction and UUF.db.profile.General.Colours.Reaction[unitReaction]
     if reactionColour then
         local reactionColourR, reactionColourG, reactionColourB = unpack(reactionColour)

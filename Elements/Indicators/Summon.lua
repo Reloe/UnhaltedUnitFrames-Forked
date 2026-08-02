@@ -7,6 +7,7 @@ function UUF:CreateUnitSummonIndicator(unitFrame, unit)
 	local SummonIndicator = unitFrame.HighLevelContainer:CreateTexture(UUF:FetchFrameName(unit) .. "_SummonIndicator", "OVERLAY")
 	SummonIndicator:SetSize(SummonDB.Size, SummonDB.Size)
 	SummonIndicator:SetPoint(SummonDB.Layout[1], unitFrame.HighLevelContainer, SummonDB.Layout[2], SummonDB.Layout[3], SummonDB.Layout[4])
+	unitFrame.UUFSummonIndicator = SummonIndicator
 
 	if SummonDB.Enabled then
 		unitFrame.SummonIndicator = SummonIndicator
@@ -22,7 +23,7 @@ function UUF:UpdateUnitSummonIndicator(unitFrame, unit)
 	if not SummonDB then return end
 
 	if SummonDB.Enabled then
-		unitFrame.SummonIndicator = unitFrame.SummonIndicator or UUF:CreateUnitSummonIndicator(unitFrame, unit)
+		unitFrame.SummonIndicator = unitFrame.SummonIndicator or unitFrame.UUFSummonIndicator or UUF:CreateUnitSummonIndicator(unitFrame, unit)
 		if not unitFrame:IsElementEnabled("SummonIndicator") then unitFrame:EnableElement("SummonIndicator") end
 
 		unitFrame.SummonIndicator:ClearAllPoints()

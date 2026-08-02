@@ -276,9 +276,6 @@ end
 function UUF:ApplyCooldownText(icon, textRegion, unit, unitFrame)
     if not icon then return end
     local CooldownTextDB = UUF.db.profile.General.CooldownText
-    for _, breakpoint in ipairs(CooldownTextDB.CooldownBreakpoints) do
-        if breakpoint.displayStyle == "secondsOnly" then breakpoint.min = 1 end
-    end
     if icon.SetCountdownFormatter then
         CooldownDurationFormatter:SetBreakpoints(CooldownTextDB.CooldownBreakpoints)
         icon:SetCountdownFormatter(CooldownDurationFormatter)
@@ -345,16 +342,19 @@ local function SetupSlashCommands()
     SlashCmdList["UUFRELOAD"] = function() C_UI.Reload() end
 end
 
+local originalUIParentScale
+
 function UUF:SetUIScale()
+    originalUIParentScale = originalUIParentScale or UIParent:GetScale()
     local GeneralDB = UUF.db.profile.General
     if GeneralDB.UIScale.Enabled then
         UIParent:SetScale(GeneralDB.UIScale.Scale or 0.5333333333333)
     else
-        return
+        UIParent:SetScale(originalUIParentScale)
     end
 end
 
-function UUF:LoadCustomColours()
+function UUF:LoadCustomColours(skipTagUpdate)
     local General = UUF.db.profile.General
     local DefaultClassColours = UUF:GetDefaultDB().profile.General.Colours.Class
 
@@ -451,9 +451,11 @@ function UUF:LoadCustomColours()
         end
 	end
 
-    for _, obj in next, oUF.objects do
-        if obj.UpdateTags then
-            obj:UpdateTags()
+    if not skipTagUpdate then
+        for _, obj in next, oUF.objects do
+            if obj.UpdateTags then
+                obj:UpdateTags()
+            end
         end
     end
 end
@@ -478,26 +480,12 @@ function UUF:GetConfiguredClassColour(classToken, unitFrame, unit)
     end
 end
 
-local function AddAnchorsToBCDM()
-    if not C_AddOns.IsAddOnLoaded("BetterCooldownManager") then return end
-    if select(4, GetBuildInfo()) >= 121000 then return end
-    local UUF_Anchors = {
-        ["UUF_Player"] = "|cFF8080FFUnhalted|rUnitFrames: Player Frame",
-        ["UUF_Target"] = "|cFF8080FFUnhalted|rUnitFrames: Target Frame",
-        ["UUF_Pet"] = "|cFF8080FFUnhalted|rUnitFrames: Pet Frame",
-    }
-    if BCDMG then
-        BCDMG:AddAnchors("UnhaltedUnitFrames", {"Utility", "CustomViewer", "Custom", "AdditionalCustom", "Item", "ItemSpell", "Trinket"}, UUF_Anchors)
-    end
-end
-
 function UUF:Init()
     SetupSlashCommands()
     UUF:SetUIScale()
     UUF:ResolveLSM()
     UUF:LoadCustomColours()
     UUF:SetTagUpdateInterval()
-    AddAnchorsToBCDM()
 end
 
 function UUF:CopyTable(originalTable, destinationTable)
@@ -878,9 +866,25 @@ UUF.SCMAnchors = {
     ["Target of Target"] = "UUF_TargetTarget",
 }
 
+local profileRefreshFrame = CreateFrame("Frame")
+profileRefreshFrame:SetScript("OnEvent", function(self)
+	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+	UUF:RefreshProfiles()
+end)
+
 function UUF:RefreshProfiles()
+	if InCombatLockdown() then
+		profileRefreshFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+		return
+	end
+
+	UUF.TAG_UPDATE_INTERVAL = UUF.db.profile.General.TagUpdateInterval or 0.25
+	UUF.SEPARATOR = UUF.db.profile.General.Separator or "||"
+	UUF.TOT_SEPARATOR = UUF.db.profile.General.ToTSeparator or "»"
 	UUF:ResolveLSM()
-	UUF:LoadCustomColours()
+	UUF:LoadCustomColours(true)
+	UUF:SetUIScale()
+	UUF:SetTagUpdateInterval()
 	UUF:UpdateAllUnitFrames()
 	UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end)
 end

@@ -17,8 +17,16 @@ function UnhaltedUnitFrames:OnInitialize()
 	UUF.db.RegisterCallback(UUF, "OnProfileReset", UUF.RefreshProfiles)
 
     local playerSpecializationChangedEventFrame = CreateFrame("Frame")
+    local specializationRefreshTimer
     playerSpecializationChangedEventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-	playerSpecializationChangedEventFrame:SetScript("OnEvent", function(_, event, ...) if InCombatLockdown() then return end if event ~= "PLAYER_SPECIALIZATION_CHANGED" then return end local unit = ... if unit == "player" then C_Timer.After(0.1, UUF.RefreshProfiles) end end)
+	playerSpecializationChangedEventFrame:SetScript("OnEvent", function(_, _, unit)
+        if unit ~= "player" then return end
+        if specializationRefreshTimer then specializationRefreshTimer:Cancel() end
+        specializationRefreshTimer = C_Timer.NewTimer(0.1, function()
+            specializationRefreshTimer = nil
+            UUF:RefreshProfiles()
+        end)
+    end)
 end
 
 function UnhaltedUnitFrames:OnEnable()

@@ -6,7 +6,8 @@ local function ShouldShowUnitPowerBar(unitFrame, unit, PowerBarDB)
 	local normalizedUnit = UUF:GetNormalizedUnit(unit)
 	if normalizedUnit ~= "party" and normalizedUnit ~= "raid" then return true end
 	local unitToken = unit == "partyplayer" and "player" or unit
-	return UnitGroupRolesAssigned(unitToken) == "HEALER"
+	local role = UnitGroupRolesAssigned(unitToken)
+	return not UUF:IsSecretValue(role) and role == "HEALER"
 end
 
 local function CreatePowerBarPostUpdateColor(unitFrame, unit)

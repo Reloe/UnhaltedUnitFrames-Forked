@@ -27,6 +27,7 @@ function UUF:CreateUnitThreatIndicator(unitFrame, unit)
 	if not ThreatDB then return end
 
 	local ThreatIndicator = UUF:CreateThreatIndicatorOverlay(unitFrame, unit)
+	unitFrame.UUFThreatIndicator = ThreatIndicator
 	if ThreatDB.Enabled then
 		unitFrame.ThreatIndicator = ThreatIndicator
 	else
@@ -41,7 +42,7 @@ function UUF:UpdateUnitThreatIndicator(unitFrame, unit)
 	if not ThreatDB then return end
 
 	if ThreatDB.Enabled then
-		unitFrame.ThreatIndicator = unitFrame.ThreatIndicator or UUF:CreateUnitThreatIndicator(unitFrame, unit)
+		unitFrame.ThreatIndicator = unitFrame.ThreatIndicator or unitFrame.UUFThreatIndicator or UUF:CreateUnitThreatIndicator(unitFrame, unit)
 		if not unitFrame:IsElementEnabled("ThreatIndicator") then unitFrame:EnableElement("ThreatIndicator") end
 		if unitFrame.ThreatIndicator then unitFrame.ThreatIndicator:ForceUpdate() end
 	elseif unitFrame.ThreatIndicator then

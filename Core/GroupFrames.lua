@@ -434,7 +434,7 @@ function UUF:LayoutGroupFrames(groupType)
 			elseif Frame.SortBy == "ROLE" then
 				local firstRole = UUF.PARTY_TEST_MODE and firstFrame.testRole or UnitGroupRolesAssigned(firstFrame.unit)
 				local secondRole = UUF.PARTY_TEST_MODE and secondFrame.testRole or UnitGroupRolesAssigned(secondFrame.unit)
-				if firstRole ~= secondRole then
+				if not UUF:IsSecretValue(firstRole) and not UUF:IsSecretValue(secondRole) and firstRole ~= secondRole then
 					for _, orderedRole in ipairs(Frame.RoleOrder or {}) do
 						if firstRole == orderedRole then return true end
 						if secondRole == orderedRole then return false end

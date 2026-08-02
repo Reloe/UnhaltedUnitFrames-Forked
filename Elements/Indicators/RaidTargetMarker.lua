@@ -6,6 +6,7 @@ function UUF:CreateUnitRaidTargetMarker(unitFrame, unit)
     local RaidTargetMarker = unitFrame.HighLevelContainer:CreateTexture(UUF:FetchFrameName(unit) .. "_RaidTargetMarkerIndicator", "OVERLAY")
     RaidTargetMarker:SetSize(RaidTargetMarkerDB.Size, RaidTargetMarkerDB.Size)
     RaidTargetMarker:SetPoint(RaidTargetMarkerDB.Layout[1], unitFrame.HighLevelContainer, RaidTargetMarkerDB.Layout[2], RaidTargetMarkerDB.Layout[3], RaidTargetMarkerDB.Layout[4])
+    unitFrame.UUFRaidTargetIndicator = RaidTargetMarker
 
     if RaidTargetMarkerDB.Enabled then
         unitFrame.RaidTargetIndicator = RaidTargetMarker
@@ -22,7 +23,7 @@ function UUF:UpdateUnitRaidTargetMarker(unitFrame, unit)
     local RaidTargetMarkerDB = UUF:GetUnitDB(unitFrame, unit).Indicators.RaidTargetMarker
 
     if RaidTargetMarkerDB.Enabled then
-        unitFrame.RaidTargetIndicator = unitFrame.RaidTargetIndicator or UUF:CreateUnitRaidTargetMarker(unitFrame, unit)
+        unitFrame.RaidTargetIndicator = unitFrame.RaidTargetIndicator or unitFrame.UUFRaidTargetIndicator or UUF:CreateUnitRaidTargetMarker(unitFrame, unit)
 
         if not unitFrame:IsElementEnabled("RaidTargetIndicator") then unitFrame:EnableElement("RaidTargetIndicator") end
 

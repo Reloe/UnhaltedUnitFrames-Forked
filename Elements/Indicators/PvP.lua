@@ -10,6 +10,7 @@ function UUF:CreateUnitPvPIndicator(unitFrame, unit)
     PvPIndicator.Badge = unitFrame.HighLevelContainer:CreateTexture(UUF:FetchFrameName(unit) .. "_PvPIndicatorBadge", "OVERLAY")
     PvPIndicator.Badge:SetSize(PvPIndicatorDB.Size * 5 / 3, PvPIndicatorDB.Size * 26 / 15)
     PvPIndicator.Badge:SetPoint("CENTER", PvPIndicator, "CENTER", 0, 0)
+    unitFrame.UUFPvPIndicator = PvPIndicator
 
     if PvPIndicatorDB.Enabled then
         unitFrame.PvPIndicator = PvPIndicator
@@ -25,7 +26,7 @@ function UUF:UpdateUnitPvPIndicator(unitFrame, unit)
     local PvPIndicatorDB = UUF.db.profile.Units.player.Indicators.PvP
 
     if PvPIndicatorDB.Enabled then
-        unitFrame.PvPIndicator = unitFrame.PvPIndicator or UUF:CreateUnitPvPIndicator(unitFrame, unit)
+        unitFrame.PvPIndicator = unitFrame.PvPIndicator or unitFrame.UUFPvPIndicator or UUF:CreateUnitPvPIndicator(unitFrame, unit)
 
         if not unitFrame:IsElementEnabled("PvPIndicator") then unitFrame:EnableElement("PvPIndicator") end
 

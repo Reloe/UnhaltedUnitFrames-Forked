@@ -4,14 +4,14 @@ local playerClass = UnitClassBase("player")
 local isDeathKnight = playerClass == "DEATHKNIGHT"
 
 local secondaryPowerEvents = CreateFrame("Frame")
+local secondaryPowerUpdateTimer
 secondaryPowerEvents:RegisterEvent("TRAIT_CONFIG_UPDATED")
-secondaryPowerEvents:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 secondaryPowerEvents:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
 secondaryPowerEvents:RegisterEvent("PLAYER_ENTERING_WORLD")
-secondaryPowerEvents:SetScript("OnEvent", function(_, event, unit)
-    if event == "PLAYER_SPECIALIZATION_CHANGED" and unit ~= "player" then return end
-
-    C_Timer.After(0.1, function()
+secondaryPowerEvents:SetScript("OnEvent", function()
+    if secondaryPowerUpdateTimer then secondaryPowerUpdateTimer:Cancel() end
+    secondaryPowerUpdateTimer = C_Timer.NewTimer(0.1, function()
+        secondaryPowerUpdateTimer = nil
         if UUF.PLAYER then
             UUF:UpdateUnitSecondaryPowerBar(UUF.PLAYER, "player")
         end
@@ -85,14 +85,15 @@ function UUF:CreateUnitSecondaryPowerBar(unitFrame, unit)
     secondaryPower.PowerBarBorder:SetHeight(1)
 
     secondaryPower.PostUpdateColor = function(element)
-        if secondaryPowerDB.ColourByType then return end
+        local currentSecondaryPowerDB = UUF:GetUnitDB(unitFrame, unit).SecondaryPowerBar
+        if currentSecondaryPowerDB.ColourByType then return end
 
         for index = 1, #element do
             element[index]:SetStatusBarColor(
-                secondaryPowerDB.Foreground[1],
-                secondaryPowerDB.Foreground[2],
-                secondaryPowerDB.Foreground[3],
-                secondaryPowerDB.Foreground[4] or 1
+                currentSecondaryPowerDB.Foreground[1],
+                currentSecondaryPowerDB.Foreground[2],
+                currentSecondaryPowerDB.Foreground[3],
+                currentSecondaryPowerDB.Foreground[4] or 1
             )
         end
     end
@@ -104,6 +105,7 @@ function UUF:CreateUnitSecondaryPowerBar(unitFrame, unit)
     else
         unitFrame.ClassPower = secondaryPower
     end
+    unitFrame.UUFSecondaryPower = secondaryPower
 
     return secondaryPower
 end
@@ -118,7 +120,7 @@ function UUF:UpdateUnitSecondaryPowerBar(unitFrame, unit)
     local elementName = isDeathKnight and "Runes" or "ClassPower"
 
     if not secondaryPowerDB.Enabled or (not isDeathKnight and not powerType) then
-        local secondaryPower = unitFrame[elementName]
+        local secondaryPower = unitFrame[elementName] or unitFrame.UUFSecondaryPower
         if secondaryPower then
             DisableSecondaryPowerElement(unitFrame, elementName, secondaryPower)
         end
@@ -134,19 +136,22 @@ function UUF:UpdateUnitSecondaryPowerBar(unitFrame, unit)
     local maxPower = isDeathKnight and 6 or UnitPowerMax("player", powerType)
     if not maxPower or maxPower < 1 then return end
 
-    local secondaryPower = unitFrame[elementName]
+    local secondaryPower = unitFrame[elementName] or unitFrame.UUFSecondaryPower
     if secondaryPower and #secondaryPower ~= maxPower then
         DisableSecondaryPowerElement(unitFrame, elementName, secondaryPower)
+        unitFrame.UUFSecondaryPower = nil
         secondaryPower = nil
     end
 
     if not secondaryPower then
         secondaryPower = UUF:CreateUnitSecondaryPowerBar(unitFrame, unit)
         if not secondaryPower then return end
+    else
+        unitFrame[elementName] = secondaryPower
+    end
 
-        if not unitFrame:IsElementEnabled(elementName) then
-            unitFrame:EnableElement(elementName)
-        end
+    if not unitFrame:IsElementEnabled(elementName) then
+        unitFrame:EnableElement(elementName)
     end
 
     local totalWidth = frameDB.Width - 2
