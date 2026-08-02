@@ -58,11 +58,15 @@ end
 AuraEligibilityEventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 AuraEligibilityEventFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
 AuraEligibilityEventFrame:RegisterEvent("UNIT_FACTION")
+AuraEligibilityEventFrame:RegisterEvent("UNIT_CONNECTION")
+AuraEligibilityEventFrame:RegisterEvent("UNIT_OTHER_PARTY_CHANGED")
+AuraEligibilityEventFrame:RegisterEvent("UNIT_PHASE")
 AuraEligibilityEventFrame:SetScript("OnEvent", function(_, event, eventUnit)
 	for unitFrame, unit in pairs(AuraUnitFrames) do
 		local unitToken = unitFrame.unit
 		if not unitToken then unitToken = unit == "partyplayer" and "player" or unit end
-		local update = event == "UNIT_FACTION" and (eventUnit == "player" or unitToken == eventUnit) or event == "PLAYER_TARGET_CHANGED" and (unit == "target" or unit == "targettarget") or event == "PLAYER_FOCUS_CHANGED" and (unit == "focus" or unit == "focustarget")
+		local unitEvent = event == "UNIT_FACTION" or event == "UNIT_CONNECTION" or event == "UNIT_OTHER_PARTY_CHANGED" or event == "UNIT_PHASE"
+		local update = unitEvent and (eventUnit == "player" or unitToken == eventUnit) or event == "PLAYER_TARGET_CHANGED" and (unit == "target" or unit == "targettarget") or event == "PLAYER_FOCUS_CHANGED" and (unit == "focus" or unit == "focustarget")
 		if update then UUF:UpdateUnitAuraEligibility(unitFrame, unit) end
 	end
 end)
@@ -438,6 +442,7 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	container.durationFormatter = GetAuraDurationFormatter(DurationDB)
 	local filters, playerTokens, otherTokens, showAllPlayer, showAllOthers = GetAuraFilters(AuraDB, auraType)
 	local hasAuraFilters = #filters > 0
+	state.HasAuraFilters = hasAuraFilters
 	local activeSpellIDGroups = {}
 	if not hasAuraFilters and not hasSpellIDs then
 		AddAuraFilter(filters, auraType)
@@ -521,16 +526,19 @@ function UUF:UpdateUnitAuraEligibility(unitFrame, unit)
 	if not unitToken then unitToken = unit == "partyplayer" and "player" or unit end
 	local canAssist = UnitCanAssist("player", unitToken)
 	local assistabilityKnown = not UUF:IsSecretValue(canAssist)
+	local isVisible = UnitIsVisible(unitToken)
+	local visibilityKnown = not UUF:IsSecretValue(isVisible)
 	for auraKey, container in pairs(unitFrame.AuraContainers or {}) do
 		local AuraDB = AurasDB.Containers[auraKey]
 		local state = container and AuraContainerState[container]
 		if AuraDB and state then
 			local auraType = AuraDB.Type == "Debuffs" and "HARMFUL" or "HELPFUL"
 			local spellIDsEligible = assistabilityKnown and (auraType == "HELPFUL" and canAssist or auraType == "HARMFUL" and not canAssist)
+			local filtersAvailable = auraType == "HARMFUL" or not state.HasAuraFilters or not visibilityKnown or isVisible
 			local shown = false
 			container:SetUnit(unitToken)
 			for configuredFilter, configuredGroupKey in pairs(state.Groups) do
-				local groupShown = state.ActiveGroups[configuredFilter] and (not state.ActiveSpellIDGroups[configuredFilter] or spellIDsEligible)
+				local groupShown = filtersAvailable and state.ActiveGroups[configuredFilter] and (not state.ActiveSpellIDGroups[configuredFilter] or spellIDsEligible)
 				container:SetAuraGroupMaxFrameCount(configuredGroupKey, groupShown and AuraDB.Num or 0)
 				if groupShown then shown = true end
 			end
