@@ -223,6 +223,9 @@ end
 
 local function ApplyAuraButtonStyle(container, button, unitFrame, unit, AuraDB, DurationDB)
 	if not CanUpdateAuraButton(button) then return end
+	if not container.durationFormatter then
+		container.durationFormatter = GetAuraDurationFormatter(container.durationDB)
+	end
 	button:SetSize(AuraDB.Size, AuraDB.Size)
 	UpdateAuraButtonCooldown(container, button)
 	if button.Count then
@@ -256,7 +259,7 @@ local function ApplyAuraButtonStyle(container, button, unitFrame, unit, AuraDB, 
 	UpdateAuraButtonTypeBorder(container, button)
 end
 
-local function CreateAuraButton(container, button)
+local function CreateAuraButton(container, unitFrame, unit, AuraDB, DurationDB, button)
 	local size = container.size or 16
 	button:SetSize(size, size)
 	button:EnableMouse(true)
@@ -295,14 +298,21 @@ local function CreateAuraButton(container, button)
 		button:SetApplicationCount(count, {
 			formatter = container.countFormatter,
 		})
+		ApplyFontStyle(count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour, unitFrame, unit)
+		count:SetShown(not AuraDB.Count.HideStacks)
 	end
 
 	if container.showDuration then
 		local duration = textParent:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
 		button.Duration = duration
+		if not container.durationFormatter then
+			container.durationFormatter = GetAuraDurationFormatter(container.durationDB)
+		end
 		button:SetDurationText(duration, {
 			textFormatter = container.durationFormatter,
 		})
+		ApplyFontStyle(duration, button, DurationDB.Layout, GetAuraDurationFontSize(DurationDB, AuraDB), DurationDB.Colour, unitFrame, unit)
+		duration:SetShown(not DurationDB.HideDuration)
 	end
 
 	if container.showBuffBorder or container.showDebuffBorder then
@@ -402,7 +412,7 @@ local function CreateAuraContainer(unitFrame, unit, auraKey)
 	container.showBuffBorder = true
 	container.showDebuffBorder = true
 	container.borderStyle = AuraButtonBorderStyle.Color
-	container.durationFormatter = GetAuraDurationFormatter(AuraDB and GetAuraDurationDB(unitFrame, unit, AuraDB))
+	container.durationDB = AuraDB and GetAuraDurationDB(unitFrame, unit, AuraDB)
 	return container
 end
 
@@ -429,7 +439,8 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	container.showBuffBorder = AuraDB.ShowType == true
 	container.showDebuffBorder = AuraDB.ShowType == true
 	container.borderStyle = AuraButtonBorderStyle.Color
-	container.durationFormatter = GetAuraDurationFormatter(DurationDB)
+	container.durationDB = DurationDB
+	container.durationFormatter = nil
 	local filters, playerTokens, otherTokens, showAllPlayer, showAllOthers = GetAuraFilters(AuraDB, auraType)
 	local hasAuraFilters = #filters > 0
 	state.HasAuraFilters = hasAuraFilters
@@ -482,7 +493,7 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 				layout = layout,
 				sortMethod = sortMethod,
 				sortDirection = sortDirection,
-				initializeFrame = GenerateClosure(CreateAuraButton, container),
+				initializeFrame = GenerateClosure(CreateAuraButton, container, unitFrame, unit, AuraDB, DurationDB),
 			})
 			state.Groups[filter] = groupKey
 		end
