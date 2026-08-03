@@ -3717,7 +3717,8 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
 		local candidateFilterDescription = candidateFilter.Desc
 		local CandidateFilterDropdown = AG:Create("Dropdown")
 		local value = AuraDB.CandidateFilters and AuraDB.CandidateFilters[candidateFilterKey]
-		CandidateFilterDropdown:SetList(CandidateFilterStates[1], CandidateFilterStates[2])
+		local candidateFilterStates = candidateFilter.Value and {{ignore = "Disabled", ["true"] = "Enabled"}, {"ignore", "true"}} or CandidateFilterStates
+		CandidateFilterDropdown:SetList(candidateFilterStates[1], candidateFilterStates[2])
 		CandidateFilterDropdown:SetLabel(candidateFilterTitle)
 		CandidateFilterDropdown:SetValue(value == true and "true" or value == false and "false" or "ignore")
 		CandidateFilterDropdown:SetRelativeWidth(0.5)
@@ -3725,7 +3726,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
 			AuraDB.CandidateFilters = AuraDB.CandidateFilters or {}
 			if selectedValue == "true" then
 				AuraDB.CandidateFilters[candidateFilterKey] = true
-			elseif selectedValue == "false" then
+			elseif selectedValue == "false" and not candidateFilter.Value then
 				AuraDB.CandidateFilters[candidateFilterKey] = false
 			else
 				AuraDB.CandidateFilters[candidateFilterKey] = nil

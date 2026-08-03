@@ -867,6 +867,7 @@ UUF.AURA_CANDIDATE_FILTERS = {
 	{Key = "canApplyAura", Title = "Can Apply Aura", Desc = "Whether the player can apply this aura."},
 	{Key = "isBossAura", Title = "Boss Aura", Desc = "Whether Blizzard classifies the aura as a boss aura."},
 	{Key = "isBossOrRoleAura", Title = "Boss or Role Aura", Desc = "Whether Blizzard classifies the aura as either a boss aura or a role aura."},
+	{Key = "maxDuration", Value = math.huge, Title = "Hide Infinite Duration", Desc = "Hides auras with no expiration while keeping all finite-duration auras."},
 }
 
 UUF.SCMAnchors = {

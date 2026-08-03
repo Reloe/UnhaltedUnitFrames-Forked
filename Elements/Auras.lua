@@ -480,7 +480,11 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 		local groupCandidateFilters = {}
 		for _, candidateFilter in ipairs(UUF.AURA_CANDIDATE_FILTERS) do
 			local value = AuraDB.CandidateFilters and AuraDB.CandidateFilters[candidateFilter.Key]
-			if type(value) == "boolean" then groupCandidateFilters[candidateFilter.Key] = value end
+			if candidateFilter.Value then
+				if value == true then groupCandidateFilters[candidateFilter.Key] = candidateFilter.Value end
+			elseif type(value) == "boolean" then
+				groupCandidateFilters[candidateFilter.Key] = value
+			end
 		end
 		if activeSpellIDGroups[filter] then groupCandidateFilters.includeSpellIDs = AuraDB.SpellIDs end
 		if excludeRaidAuras then groupCandidateFilters.excludeSpellIDs = RaidAuraExcludedSpellIDs end
