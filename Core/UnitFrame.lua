@@ -3,6 +3,25 @@ local oUF = UUF.oUF
 local raidFrameIndex = 0
 local raidStyleRegistered = false
 
+local function IsHealthPingEnabled(frame)
+    local unitDB = UUF.db and UUF.db.profile.Units[frame.UUFPingModule]
+    return unitDB and unitDB.Frame.HealthPing == true
+end
+
+local function GetPingTargetInfo(frame)
+    local unit = frame:GetAttribute("unit")
+    local isPlayerResource = IsHealthPingEnabled(frame) and unit == "player" and not (frame.Portrait and frame.Portrait:IsMouseOver())
+    return {guid = UnitGUID(unit), isPlayerResource = isPlayerResource or nil}
+end
+
+local function GetPingAllowRadialWheel(frame)
+    local unit = frame:GetAttribute("unit")
+    if IsHealthPingEnabled(frame) and unit == "player" then
+        return frame.Portrait and frame.Portrait:IsMouseOver() or false
+    end
+    return true
+end
+
 local function ApplyScripts(unitFrame)
     unitFrame:RegisterForClicks("AnyUp")
     unitFrame:SetAttribute("*type1", "target")
@@ -12,7 +31,10 @@ local function ApplyScripts(unitFrame)
 end
 
 function UUF:CreateUnitFrame(unitFrame, unit)
-    if not unit or not unitFrame then return end
+	if not unit or not unitFrame then return end
+	unitFrame.GetTargetInfo = GetPingTargetInfo
+	unitFrame.GetAllowRadialWheel = GetPingAllowRadialWheel
+	unitFrame.UUFPingModule = UUF:GetNormalizedUnit(unit)
 	if unitFrame:GetParent() == UUF.AUGMENTATION_RAID_HEADER then unitFrame.isAugmentationRaidFrame = true end
     local UnitDB = UUF:GetUnitDB(unitFrame, unit)
     local isPlayer = unit == "player"

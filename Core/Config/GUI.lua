@@ -1065,6 +1065,13 @@ local function CreateFrameSettings(containerParent, unit, unitHasParent, updateC
     FrameStrataDropdown:SetCallback("OnValueChanged", function(_, _, value) FrameDB.FrameStrata = value updateCallback("Frame") end)
     LayoutContainer:AddChild(FrameStrataDropdown)
 
+    local HealthPingToggle = AG:Create("CheckBox")
+    HealthPingToggle:SetLabel("Enable Health Ping")
+    HealthPingToggle:SetValue(FrameDB.HealthPing == true)
+    HealthPingToggle:SetRelativeWidth(0.25)
+    HealthPingToggle:SetCallback("OnValueChanged", function(_, _, value) FrameDB.HealthPing = value updateCallback("Frame") end)
+    LayoutContainer:AddChild(HealthPingToggle)
+
     local ColourContainer = GUIWidgets.CreateInlineGroup(containerParent, "Colours & Toggles")
     local healthToggleWidth = (unit == "player" or unit == "target") and 0.25 or 0.33
 	local primaryToggleWidth = (unit == "party" or unit == "raid" or unit == "augmentation") and 0.33 or healthToggleWidth
