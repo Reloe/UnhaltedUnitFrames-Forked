@@ -18,8 +18,8 @@ local RaidAuraExcludedSpellIDs = {
 }
 
 function UUF:CreateAuraContainerFrame(parent, name, options)
-	if C_AddOns and not C_AddOns.IsAddOnLoaded("Blizzard_AuraContainer") then
-		pcall(C_AddOns.LoadAddOn, "Blizzard_AuraContainer")
+	if not C_AddOns.IsAddOnLoaded("Blizzard_AuraContainer") then
+		C_AddOns.LoadAddOn("Blizzard_AuraContainer")
 	end
 	AuraContainerSerial = AuraContainerSerial + 1
 	name = (name or "UUF_AuraContainer"):gsub("[^%w_]", "") .. AuraContainerSerial
