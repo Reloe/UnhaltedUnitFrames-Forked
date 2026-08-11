@@ -1,6 +1,6 @@
 local parent, ns = ...
 local global = C_AddOns.GetAddOnMetadata(parent, 'X-oUF')
-local _VERSION = '3ee19da'
+local _VERSION = '14.0.0'
 if(_VERSION:find('project%-version')) then
 	_VERSION = 'devel'
 end
@@ -12,18 +12,13 @@ local argcheck = Private.argcheck
 local print = Private.print --luacheck: no unused
 local unitExists = Private.unitExists
 local nierror = Private.nierror
-local allocateAuraContainers = Private.AllocateAuraContainers
 
 local styles, style = {}
 local callback, objects, headers = {}, {}, {}
 
 local elements = {}
 local activeElements = {}
-
-local PetBattleFrameHider = CreateFrame('Frame', (global or parent) .. '_PetBattleFrameHider', UIParent, 'SecureHandlerStateTemplate')
-PetBattleFrameHider:SetAllPoints()
-PetBattleFrameHider:SetFrameStrata('LOW')
-RegisterStateDriver(PetBattleFrameHider, 'visibility', '[petbattle] hide; show')
+local pausedElements = {}
 
 local function updateActiveUnit(self, event)
 	-- Calculate units to work with
@@ -83,9 +78,16 @@ local frame_metatable = {
 }
 Private.frame_metatable = frame_metatable
 
+local objectElementUpdateFuncs = {}
+function Private.insertObjectElementUpdateFunc(object, func)
+	table.insert(objectElementUpdateFuncs[object], func)
+end
+
 for k, v in next, {
 	--[[ frame:EnableElement(name[, unit])
-	Used to activate an element for the given unit frame.
+	Used to activate an element on the given unit frame.
+
+	If the element was previously paused on the given unit frame it will also be resumed.
 
 	* self - unit frame for which the element should be enabled
 	* name - name of the element to be enabled (string)
@@ -98,17 +100,21 @@ for k, v in next, {
 		local element = elements[name]
 		if(not element or self:IsElementEnabled(name)) then return end
 
-		if(element.enable(self, unit or self.unit)) then
+		if(element.enable(self, unit or self.__unit)) then
 			activeElements[self][name] = true
 
+			if(pausedElements[self]) then
+				pausedElements[self][name] = nil
+			end
+
 			if(element.update) then
-				table.insert(self.__elements, element.update)
+				table.insert(objectElementUpdateFuncs[self], element.update)
 			end
 		end
 	end,
 
 	--[[ frame:DisableElement(name[, unit])
-	Used to deactivate an element for the given unit frame.
+	Used to deactivate an element on the given unit frame.
 
 	* self - unit frame for which the element should be disabled
 	* name - name of the element to be disabled (string)
@@ -118,22 +124,29 @@ for k, v in next, {
 		argcheck(name, 2, 'string')
 		argcheck(unit, 3, 'string', 'nil')
 
-		local enabled = self:IsElementEnabled(name)
-		if(not enabled) then return end
+		if(not self:IsElementEnabled(name)) then return end
+
+		activeElements[self][name] = nil
+
+		if(self:IsElementPaused(name)) then
+			-- no need to run deactivation as that's already been done from pausing, just
+			-- remove the pause state instead
+			pausedElements[self][name] = nil
+
+			return true
+		end
 
 		local update = elements[name].update
 		if(update) then
-			for k, func in next, self.__elements do
+			for index, func in next, objectElementUpdateFuncs[self] do
 				if(func == update) then
-					table.remove(self.__elements, k)
+					table.remove(objectElementUpdateFuncs[self], index)
 					break
 				end
 			end
 		end
 
-		activeElements[self][name] = nil
-
-		return elements[name].disable(self, unit or self.unit)
+		return elements[name].disable(self, unit or self.__unit)
 	end,
 
 	--[[ frame:IsElementEnabled(name)
@@ -145,11 +158,83 @@ for k, v in next, {
 	IsElementEnabled = function(self, name)
 		argcheck(name, 2, 'string')
 
-		local element = elements[name]
-		if(not element) then return end
+		if(not elements[name]) then return end
 
 		local active = activeElements[self]
 		return active and active[name]
+	end,
+
+	--[[ frame:PauseElement(name[, unit])
+	Used to pause the execution of an element on the given unit frame.
+
+	Nameplates automatically resume paused elements.
+
+	* self - unit frame for which the element should be paused
+	* name - name of the element to be paused (string)
+	* unit - unit to be passed to the element's Disable function. Defaults to the frame's unit (string?)
+	--]]
+	PauseElement = function(self, name, unit)
+		argcheck(name, 2, 'string')
+		argcheck(unit, 3, 'string', 'nil')
+
+		if(self:IsElementPaused(name) or not self:IsElementEnabled(name)) then return end
+
+		if(not pausedElements[self]) then
+			pausedElements[self] = {}
+		end
+
+		pausedElements[self][name] = true
+
+		-- deactivate as if we're disabling
+		local update = elements[name].update
+		if(update) then
+			for index, func in next, objectElementUpdateFuncs[self] do
+				if(func == update) then
+					table.remove(objectElementUpdateFuncs[self], index)
+					break
+				end
+			end
+		end
+
+		return elements[name].disable(self, unit or self.__unit)
+	end,
+
+	--[[ frame:ResumeElement(name[, unit])
+	Used to resume a paused element on the given unit frame, if the element is not disabled.
+
+	* self - unit frame for which the element should be resumed
+	* name - name of the element to be resumed (self)
+	* unit - unit to be passed to the element's Enable function. Defaults to the frame's unit (string?)
+	--]]
+	ResumeElement = function(self, name, unit)
+		argcheck(name, 2, 'string')
+		argcheck(unit, 3, 'string', 'nil')
+
+		if(not self:IsElementPaused(name) or not self:IsElementEnabled(name)) then return end
+
+		local element = elements[name]
+		if(element.enable(self, unit or self.__unit)) then
+			pausedElements[self][name] = nil
+
+			if(element.update) then
+				table.insert(objectElementUpdateFuncs[self], element.update)
+			end
+		end
+	end,
+
+	--[[ frame:IsElementPaused(name)
+	Used to check if an element is paused on a given frame.
+
+	* self - unit frame
+	* name - name of the element (string)
+	--]]
+	IsElementPaused = function(self, name)
+		argcheck(name, 2, 'string')
+
+		if(not elements[name]) then return end
+
+		local paused = pausedElements[self]
+		return paused and paused[name]
 	end,
 
 	--[[ frame:Enable(asState)
@@ -178,13 +263,13 @@ for k, v in next, {
 	--]]
 	IsEnabled = UnitWatchRegistered,
 	--[[ frame:UpdateAllElements(event)
-	Used to update all enabled elements on the given frame.
+	Used to update all enabled elements on the given frame, unless they're paused.
 
 	* self  - unit frame
 	* event - event name to pass to the elements' update functions (string)
 	--]]
 	UpdateAllElements = function(self, event)
-		local unit = self.unit
+		local unit = self.__unit
 		if(not unitExists(unit)) then return end
 
 		assert(type(event) == 'string', "Invalid argument 'event' in UpdateAllElements.")
@@ -199,12 +284,9 @@ for k, v in next, {
 			self:PreUpdate(event)
 		end
 
-		for _, func in next, self.__elements do
+		for _, func in next, objectElementUpdateFuncs[self] do
 			func(self, event, unit)
 		end
-
-		-- special handling for auras since it's not a real element
-		self:UpdateAllAuras()
 
 		if(self.PostUpdate) then
 			--[[ Callback: frame:PostUpdate(event)
@@ -214,6 +296,30 @@ for k, v in next, {
 			* event - the event triggering the update (string)
 			--]]
 			self:PostUpdate(event)
+		end
+	end,
+
+	--[[ frame:PauseAllElements()
+	Pauses all elements on the given unit frame.
+
+	* self - unit frame for which the elements should be paused
+	--]]
+	PauseAllElements = function(self)
+		for element in next, activeElements[self] do
+			self:PauseElement(element)
+		end
+	end,
+
+	--[[ frame:ResumeAllElements()
+	Resumes all paused elements on the given unit frame.
+
+	* self - unit frame for which the elements should be resumed
+	--]]
+	ResumeAllElements = function(self)
+		if(not pausedElements[self]) then return end
+
+		for element in next, pausedElements[self] do
+			self:ResumeElement(element)
 		end
 	end,
 } do
@@ -235,13 +341,13 @@ local function updatePet(self, event, unit)
 		petUnit = unit:gsub('^(%a+)(%d+)', '%1pet%2')
 	end
 
-	if(self.unit ~= petUnit) then return end
+	if(self.__unit ~= petUnit) then return end
 
 	evalUnitAndUpdate(self, event)
 end
 
 local function updateRaid(self, event)
-	local unitGUID = UnitGUID(self.unit)
+	local unitGUID = UnitGUID(self.__unit)
 	if(unitGUID ~= nil and not issecretvalue(unitGUID) and unitGUID ~= self.unitGUID) then
 		self.unitGUID = unitGUID
 
@@ -262,7 +368,7 @@ local function initObject(unit, style, styleFunc, header, ...)
 			objectUnit = objectUnit .. suffix
 		end
 
-		object.__elements = {}
+		objectElementUpdateFuncs[object] = {}
 		object.style = style
 		object = setmetatable(object, frame_metatable)
 
@@ -278,7 +384,7 @@ local function initObject(unit, style, styleFunc, header, ...)
 		-- frame will be stuck with the 'vehicle' unit.
 		object:RegisterEvent('PLAYER_ENTERING_WORLD', evalUnitAndUpdate, true)
 
-		if(not objectUnit:match('%w+target')) then
+		if(not objectUnit:match('%w+target') and not object.isNamePlate) then
 			object:RegisterEvent('UNIT_ENTERED_VEHICLE', evalUnitAndUpdate)
 			object:RegisterEvent('UNIT_EXITED_VEHICLE', evalUnitAndUpdate)
 
@@ -623,16 +729,6 @@ do
 		end
 	end
 
-	--[[ header:SetNumAuraContainers(numContainers)
-	Sets the amount of aura containers to pre-create for each header child.
-
-	The default is 3.
-	--]]
-	function headerMixin:SetNumAuraContainers(numContainers)
-		-- up to 40 raid units can exist at the same time
-		allocateAuraContainers(self.prefix .. 'UnitButton', 40, numContainers)
-	end
-
 	--[[ oUF:SpawnHeader(overrideName, template, ...)
 	Used to create a group header and apply the currently active style to it.
 
@@ -658,7 +754,8 @@ do
 
 		local isPetHeader = template:match('PetHeader')
 		local name = overrideName or generateName(nil, ...)
-		local header = Mixin(CreateFrame('Frame', name, PetBattleFrameHider, template), headerMixin)
+		local header = Mixin(CreateFrame('Frame', name, UIParent, template), headerMixin)
+		header:SetRolesets('unitFrames')
 
 		header:SetAttribute('template', 'SecureUnitButtonTemplate, SecureHandlerStateTemplate, SecureHandlerEnterLeaveTemplate, PingableUnitFrameTemplate')
 
@@ -678,7 +775,6 @@ do
 
 		header.style = style
 		header.styleFunction = styleProxy
-		header.prefix = name
 
 		-- Expose the header through oUF.headers.
 		table.insert(headers, header)
@@ -724,8 +820,6 @@ do
 			self:DisableBlizzard('party')
 		end
 
-		header:SetNumAuraContainers(3)
-
 		return header
 	end
 end
@@ -750,8 +844,14 @@ function oUF:Spawn(unit, overrideName)
 	unit = unit:lower()
 
 	local name = overrideName or generateName(unit)
-	local object = CreateFrame('Button', name, PetBattleFrameHider, 'SecureUnitButtonTemplate, PingableUnitFrameTemplate')
+	local object = CreateFrame('Button', name, UIParent, 'SecureUnitButtonTemplate, PingableUnitFrameTemplate')
 	Private.UpdateUnits(object, unit)
+
+	if(unit:match('arena%d?')) then
+		object:SetRolesets('arenaFrames')
+	else
+		object:SetRolesets('unitFrames')
+	end
 
 	self:DisableBlizzard(unit)
 	walkObject(object, unit)
@@ -872,22 +972,13 @@ do
 		updateDriver(self)
 	end
 
-	--[[ nameplates:SetNumAuraContainers(numContainers)
-	Sets the amount of aura containers to pre-allocate for each nameplate.
-
-	The default is 3.
-	--]]
-	function nameplateDriverMixin:SetNumAuraContainers(numContainers)
-		-- up to 40 nameplates can exist at the same time
-		allocateAuraContainers(self.prefix .. 'NamePlate', 40, numContainers)
-	end
-
 	local function driverEventHandler(self, event, unit)
 		if(event == 'PLAYER_LOGIN') then
 			updateDriver(self)
 		elseif(event == 'PLAYER_TARGET_CHANGED') then
 			local nameplate = C_NamePlate.GetNamePlateForUnit('target')
 			if(not nameplate or not nameplate.unitFrame) then return end
+			if(UnitNameplateShowsWidgetsOnly('target') or UnitIsGameObject('target')) then return end
 
 			if(self.targetCallback) then
 				self.targetCallback(nameplate.unitFrame, event, 'target')
@@ -900,6 +991,8 @@ do
 			local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
 			if(not nameplate) then return end
 
+			-- we need to disable blizzard's handling on every spawn because they keep
+			-- initializing stuff on nameplates
 			oUF:DisableBlizzard(unit)
 
 			if(not nameplate.unitFrame) then
@@ -907,47 +1000,52 @@ do
 
 				nameplate.unitFrame = CreateFrame('Button', self.prefix .. nameplate:GetName(), nameplate, 'PingableUnitFrameTemplate')
 				nameplate.unitFrame:EnableMouse(false)
-				nameplate.unitFrame.isNamePlate = true
 				nameplate.unitFrame:SetAllPoints()
+				nameplate.unitFrame.isNamePlate = true
 
 				Private.UpdateUnits(nameplate.unitFrame, unit)
 
 				walkObject(nameplate.unitFrame, unit)
+
+				-- re-parent other elements directly to the nameplate frame, as there doesn't seem
+				-- to be any downsides to be parented there than to the unit frame within,
+				-- and this is the easier solution (no need to actively reparent and show/hide
+				-- the stock unit frame object)
+				nameplate.UnitFrame.WidgetContainer:SetParent(nameplate)
+				nameplate.UnitFrame.WidgetContainer:SetPoint('TOP', nameplate, 'BOTTOM')
+				nameplate.UnitFrame.SoftTargetFrame:SetParent(nameplate)
+			end
+
+			if(UnitNameplateShowsWidgetsOnly(unit) or UnitIsGameObject(unit)) then
+				-- pause all active elements and hide the unit frame
+				nameplate.unitFrame:PauseAllElements()
+				nameplate.unitFrame:Hide()
 			else
+				-- we need to keep updating the attributes in order to keep correct info,
+				-- as this can change during nameplate re-use
+				nameplate.unitFrame:SetAttribute('unit', unit)
 				Private.UpdateUnits(nameplate.unitFrame, unit)
-			end
 
-			nameplate:ClearAllHitTestPoints() -- to prevent lingering hit test points on default
-			nameplate:SetAllHitTestPoints(nameplate.unitFrame)
+				nameplate:ClearAllHitTestPoints() -- to prevent lingering hit test points
+				nameplate:SetAllHitTestPoints(nameplate.unitFrame)
 
-			nameplate.unitFrame:SetAttribute('unit', unit)
-
-			if(nameplate.UnitFrame) then
-				if(nameplate.UnitFrame.WidgetContainer) then
-					nameplate.UnitFrame.WidgetContainer:SetParent(nameplate.unitFrame)
-					nameplate.UnitFrame.WidgetContainer:SetIgnoreParentAlpha(true)
-					nameplate.unitFrame.WidgetContainer = nameplate.UnitFrame.WidgetContainer
+				if(self.addedCallback) then
+					self.addedCallback(nameplate.unitFrame, event, unit)
 				end
-				if(nameplate.UnitFrame.SoftTargetFrame) then
-					-- we keep this to render soft target interaction icons above the "target"
-					nameplate.UnitFrame.SoftTargetFrame:SetParent(nameplate.unitFrame)
-					nameplate.UnitFrame.SoftTargetFrame:SetIgnoreParentAlpha(true)
-					nameplate.unitFrame.SoftTargetFrame = nameplate.UnitFrame.SoftTargetFrame
-				end
-			end
 
-			if(self.addedCallback) then
-				self.addedCallback(nameplate.unitFrame, event, unit)
+				-- UAE is called after the callback to reduce the number of
+				-- ForceUpdate calls layouts have to do after changing things
+				nameplate.unitFrame:UpdateAllElements(event)
 			end
-
-			-- UAE is called after the callback to reduce the number of
-			-- ForceUpdate calls layouts have to do after changing things
-			nameplate.unitFrame:UpdateAllElements(event)
 		elseif(event == 'NAME_PLATE_UNIT_REMOVED') then
 			local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
 			if(not nameplate or not nameplate.unitFrame) then return end
 
 			nameplate.unitFrame:SetAttribute('unit', nil)
+
+			-- resume any paused elements and show the unit frame
+			nameplate.unitFrame:ResumeAllElements()
+			nameplate.unitFrame:Show()
 
 			if(self.removedCallback) then
 				self.removedCallback(nameplate.unitFrame, event, unit)
@@ -979,13 +1077,16 @@ do
 		nameplateDriver:RegisterEvent('NAME_PLATE_UNIT_REMOVED')
 		nameplateDriver:RegisterEvent('PLAYER_TARGET_CHANGED')
 
+		-- we'd prefer to straight up disable blizzard's nameplate driver, but nameplates contain
+		-- widgets and soft target icons we can't recreate due to protections, and it handles the
+		-- forbidden nameplates, so we can't disable any events without friendly nameplates in
+		-- dungeons breaking
+
 		if(IsLoggedIn()) then
 			updateDriver(nameplateDriver)
 		else
 			nameplateDriver:RegisterEvent('PLAYER_LOGIN')
 		end
-
-		nameplateDriver:SetNumAuraContainers(3)
 
 		return nameplateDriver
 	end
@@ -1012,6 +1113,32 @@ function oUF:AddElement(name, update, enable, disable)
 		enable = enable,
 		disable = disable,
 	}
+end
+
+--[[ oUF:AddMetaElement(name, create, update, enable, disable)
+Used to register a meta element with oUF.
+
+* self    - the global oUF object
+* name    - unique name of the element (string)
+* create  - used to create the element. Will be registered as a meta function (function)
+* update  - used to update the element (function)
+* enable  - used to enable the element for a given unit frame and unit (function)
+* disable - used to disable the element for a given unit frame (function)
+--]]
+function oUF:AddMetaElement(name, create, update, enable, disable)
+	argcheck(name, 2, 'string')
+	argcheck(create, 3, 'function')
+	argcheck(update, 4, 'function', 'nil')
+	argcheck(enable, 5, 'function')
+	argcheck(disable, 6, 'function')
+
+	if(elements[name]) then return nierror(string.format('Element [%s] is already registered.', name)) end
+	elements[name] = {
+		update = update,
+		enable = enable,
+		disable = disable,
+	}
+	self:RegisterMetaFunction('Create' .. name, create)
 end
 
 oUF.version = _VERSION
