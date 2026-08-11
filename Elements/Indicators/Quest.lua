@@ -17,6 +17,13 @@ function UUF:CreateUnitQuestIndicator(unitFrame, unit)
     local QuestIndicator = unitFrame.HighLevelContainer:CreateTexture(UUF:FetchFrameName(unit) .. "_QuestIndicator", "OVERLAY")
     QuestIndicator:SetPoint(QuestIndicatorDB.Layout[1], unitFrame.HighLevelContainer, QuestIndicatorDB.Layout[2], QuestIndicatorDB.Layout[3], QuestIndicatorDB.Layout[4])
     QuestIndicator.PostUpdate = UpdateQuestTexture
+    QuestIndicator.Override = function(frame, updateEvent, updateUnit)
+        local activeUnit = updateUnit or frame.__unit
+        local isQuestUnit = UnitIsQuestBoss(activeUnit) or C_QuestLog.UnitIsRelatedToActiveQuest(activeUnit)
+        local element = frame.QuestUnitIndicator
+        element:SetShown(isQuestUnit)
+        if element.PostUpdate then return element:PostUpdate(isQuestUnit) end
+    end
     UpdateQuestTexture(QuestIndicator)
     unitFrame.UUFQuestUnitIndicator = QuestIndicator
 

@@ -26,8 +26,14 @@ local function ApplyScripts(unitFrame)
     unitFrame:RegisterForClicks("AnyUp")
     unitFrame:SetAttribute("*type1", "target")
     unitFrame:SetAttribute("*type2", "togglemenu")
-    unitFrame:HookScript("OnEnter", UnitFrame_OnEnter)
-    unitFrame:HookScript("OnLeave", UnitFrame_OnLeave)
+    unitFrame:HookScript("OnEnter", function(frame)
+        local unit = frame:GetAttribute("unit")
+        if unit then
+            GameTooltip_SetDefaultAnchor(GameTooltip, frame)
+            GameTooltip:SetUnit(unit)
+        end
+    end)
+    unitFrame:HookScript("OnLeave", function() GameTooltip:Hide() end)
 end
 
 function UUF:CreateUnitFrame(unitFrame, unit)

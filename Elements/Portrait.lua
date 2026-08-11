@@ -1,7 +1,7 @@
 local _, UUF = ...
 
 local function Update3DPortrait(unitFrame, _, unit)
-	if not unit or not UnitIsUnit(unitFrame.unit, unit) then return end
+	if not unit or not UnitIsUnit(unitFrame.__unit, unit) then return end
 
 	local unitPortrait = unitFrame.Portrait
 	if unitPortrait.PreUpdate then unitPortrait:PreUpdate(unit) end

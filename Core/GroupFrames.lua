@@ -205,7 +205,6 @@ function UUF:SpawnAugmentationRaidFrames()
 			"unitsPerColumn", FrameDB.UnitsPerColumn or UUF.MAX_RAID_FRAMES_PER_GROUP,
 			"maxColumns", math.ceil(UUF.MAX_RAID_FRAMES / (FrameDB.UnitsPerColumn or UUF.MAX_RAID_FRAMES_PER_GROUP))
 		)
-	UUF.AUGMENTATION_RAID_HEADER:SetNumAuraContainers(UUF.MAX_AURA_CONTAINERS)
 		UUF.AUGMENTATION_RAID_HEADER:SetParent(UUF.AUGMENTATION_RAID_CONTAINER)
 		UUF.AUGMENTATION_RAID_HEADER:SetVisibility("raid")
 	end
@@ -286,7 +285,6 @@ function UUF:SpawnGroupFrame(groupType)
 				"maxColumns", 1,
 				"sortMethod", FrameDB.SortBy == "INDEX" and "INDEX" or nil
 			)
-			header:SetNumAuraContainers(UUF.MAX_AURA_CONTAINERS)
 			header:SetSize(FrameDB.Width, FrameDB.Height)
 			header:SetParent(UUF.RAID_CONTAINER)
 			header:SetVisibility("raid")
@@ -430,10 +428,10 @@ function UUF:LayoutGroupFrames(groupType)
 		for _, partyFrame in ipairs(UUF.PARTY_FRAMES) do partyFrames[#partyFrames + 1] = partyFrame end
 		table.sort(partyFrames, function(firstFrame, secondFrame)
 			if Frame.SortBy == "NAME" then
-				return (UnitName(firstFrame.unit) or firstFrame.unit or "") < (UnitName(secondFrame.unit) or secondFrame.unit or "")
+				return (UnitName(firstFrame.__unit) or firstFrame.__unit or "") < (UnitName(secondFrame.__unit) or secondFrame.__unit or "")
 			elseif Frame.SortBy == "ROLE" then
-				local firstRole = UUF.PARTY_TEST_MODE and firstFrame.testRole or UnitGroupRolesAssigned(firstFrame.unit)
-				local secondRole = UUF.PARTY_TEST_MODE and secondFrame.testRole or UnitGroupRolesAssigned(secondFrame.unit)
+				local firstRole = UUF.PARTY_TEST_MODE and firstFrame.testRole or UnitGroupRolesAssigned(firstFrame.__unit)
+				local secondRole = UUF.PARTY_TEST_MODE and secondFrame.testRole or UnitGroupRolesAssigned(secondFrame.__unit)
 				if not UUF:IsSecretValue(firstRole) and not UUF:IsSecretValue(secondRole) and firstRole ~= secondRole then
 					for _, orderedRole in ipairs(Frame.RoleOrder or {}) do
 						if firstRole == orderedRole then return true end

@@ -17,7 +17,7 @@ function UUF:CreateUnitCombatIndicator(unitFrame, unit)
             Combat:SetTexture(UUF.StatusTextures["Combat"][CombatDB.Texture])
             Combat:SetTexCoord(0, 1, 0, 1)
         end
-        if UnitAffectingCombat(unitFrame.unit) then Combat:Show() end
+        if UnitAffectingCombat(unit) then Combat:Show() end
     end
 
     return Combat
@@ -42,7 +42,7 @@ function UUF:UpdateUnitCombatIndicator(unitFrame, unit)
                 unitFrame.CombatIndicator:SetTexture(UUF.StatusTextures["Combat"][CombatDB.Texture])
                 unitFrame.CombatIndicator:SetTexCoord(0, 1, 0, 1)
             end
-            if UnitAffectingCombat(unitFrame.unit) then
+            if UnitAffectingCombat(unit) then
                 unitFrame.CombatIndicator:Show()
             else
                 unitFrame.CombatIndicator:Hide()

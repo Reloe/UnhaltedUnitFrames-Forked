@@ -2,7 +2,7 @@ local _, UUF = ...
 
 function UUF:UpdateUnitContainerLayers(unitFrame, unit)
     if not unitFrame or not unitFrame.Container or not unitFrame.HighLevelContainer then return end
-    local frameUnit = unit or unitFrame.UUFConfiguredUnit or unitFrame.unit
+    local frameUnit = unit or unitFrame.UUFConfiguredUnit or unitFrame.__unit
     local normalizedUnit = frameUnit and UUF:GetNormalizedUnit(frameUnit)
     local isGroupFrame = normalizedUnit == "party" or normalizedUnit == "raid"
     if not isGroupFrame then unitFrame.Container:SetFrameStrata(unitFrame:GetFrameStrata()) end

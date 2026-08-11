@@ -63,7 +63,7 @@ AuraEligibilityEventFrame:RegisterEvent("UNIT_OTHER_PARTY_CHANGED")
 AuraEligibilityEventFrame:RegisterEvent("UNIT_PHASE")
 AuraEligibilityEventFrame:SetScript("OnEvent", function(_, event, eventUnit)
 	for unitFrame, unit in pairs(AuraUnitFrames) do
-		local unitToken = unitFrame.unit
+		local unitToken = unitFrame.__unit
 		if not unitToken then unitToken = unit == "partyplayer" and "player" or unit end
 		local unitEvent = event == "UNIT_FACTION" or event == "UNIT_CONNECTION" or event == "UNIT_OTHER_PARTY_CHANGED" or event == "UNIT_PHASE"
 		local update = unitEvent and (eventUnit == "player" or unitToken == eventUnit) or event == "PLAYER_TARGET_CHANGED" and (unit == "target" or unit == "targettarget") or event == "PLAYER_FOCUS_CHANGED" and (unit == "focus" or unit == "focustarget")
@@ -534,7 +534,7 @@ function UUF:UpdateUnitAuraEligibility(unitFrame, unit)
 	if UUF.AURA_TEST_MODE or not unitFrame or not unit then return end
 	local AurasDB = UUF:GetUnitDB(unitFrame, unit).Auras
 	if not AurasDB then return end
-	local unitToken = unitFrame.unit
+	local unitToken = unitFrame.__unit
 	if not unitToken then unitToken = unit == "partyplayer" and "player" or unit end
 	local canAssist = UnitCanAssist("player", unitToken)
 	local assistabilityKnown = not UUF:IsSecretValue(canAssist)

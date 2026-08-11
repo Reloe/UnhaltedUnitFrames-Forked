@@ -28,11 +28,11 @@ local function ApplyColour(healthBar, colour, alpha)
 end
 
 local function UpdateHealthBarColour(unitFrame, configuredUnit, eventUnit)
-    if eventUnit and unitFrame.unit and unitFrame.unit ~= eventUnit then return end
+    if eventUnit and unitFrame.__unit and unitFrame.__unit ~= eventUnit then return end
     local healthBar = unitFrame.Health
     if not healthBar then return end
     local HealthBarDB = UUF:GetUnitDB(unitFrame, configuredUnit).HealthBar
-    local unitToken = unitFrame.unit or configuredUnit
+    local unitToken = unitFrame.__unit or configuredUnit
     local alpha = HealthBarDB.ForegroundOpacity
 
     if HealthBarDB.ColourWhenDisconnected then
@@ -63,7 +63,7 @@ local function UpdateHealthBarColour(unitFrame, configuredUnit, eventUnit)
 end
 
 local function SetHealthBackgroundColour(unitFrame, unit, HealthBarDB, forceUpdate)
-	local backgroundUnit = unitFrame.unit or unit
+	local backgroundUnit = unitFrame.__unit or unit
 	local deadState = HealthBarDB.ColourBackdropWhenDead and UnitIsDeadOrGhost(backgroundUnit)
 	local isDead = IsKnownValue(deadState) and deadState or false
 	local backgroundClassR, backgroundClassG, backgroundClassB
@@ -136,7 +136,7 @@ function UUF:CreateUnitHealthBar(unitFrame, unit)
             maxHP = maxHP or 1
             curHP = curHP or 0
             unitHP:SetMinMaxValues(0, maxHP)
-            unitHP:SetValue(UnitHealthMissing(unitFrame.unit, true), unitFrame.Health.smoothing)
+			unitHP:SetValue(UnitHealthMissing(unitFrame.__unit or unit, true), unitFrame.Health.smoothing)
 			SetHealthBackgroundColour(unitFrame, unit, UUF:GetUnitDB(unitFrame, unit).HealthBar)
 			if UUF.UpdateUnitHealthTags then UUF:UpdateUnitHealthTags(unitFrame) end
         end

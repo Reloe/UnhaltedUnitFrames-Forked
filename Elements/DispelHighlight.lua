@@ -22,7 +22,7 @@ DispelCapabilityEventFrame:RegisterEvent("UNIT_FACTION")
 DispelCapabilityEventFrame:SetScript("OnEvent", function(_, event, eventUnit)
 	for unitFrame, state in pairs(DispelHighlightState) do
 		local unit = state.Unit
-		local unitToken = unitFrame.unit
+		local unitToken = unitFrame.__unit
 		if not unitToken then unitToken = unit == "partyplayer" and "player" or unit end
 		local update = event == "SPELLS_CHANGED" or event == "PLAYER_TALENT_UPDATE" or event == "UNIT_FACTION" and (eventUnit == "player" or unitToken == eventUnit) or event == "PLAYER_TARGET_CHANGED" and unit == "target" or event == "PLAYER_FOCUS_CHANGED" and unit == "focus"
 		if update then UUF:UpdateUnitDispelHighlight(unitFrame, unit) end
@@ -79,7 +79,7 @@ function UUF:UpdateUnitDispelHighlight(unitFrame, unit)
 	local state = DispelHighlightState[unitFrame]
 	if not container or not state then return end
 	state.Unit = unit
-	local unitToken = unitFrame.unit
+	local unitToken = unitFrame.__unit
 	if not unitToken then unitToken = unit == "partyplayer" and "player" or unit end
 	local DispelHighlightDB = UUF:GetUnitDB(unitFrame, unit).HealthBar.DispelHighlight
 	local onlyShowDispellableByPlayer = DispelHighlightDB.OnlyShowDispellableByPlayer ~= false
