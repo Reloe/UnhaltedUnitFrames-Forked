@@ -475,17 +475,6 @@ local function UpdateBossTestEnvironment(element)
 			end
 			if updateAll or element == "Frame" then BossFrame:SetFrameStrata(BossDB.Frame.FrameStrata) end
 
-			if (updateAll or element == "Frame" or element == "HealthBar") and BossFrame.Health then
-				if not updateAll then UUF:UpdateUnitHealthBar(BossFrame, "boss" .. i) end
-				local HealthBarDB = BossDB.HealthBar
-				BossFrame.Health:SetMinMaxValues(0, TestData[i].maxHealth)
-				BossFrame.Health:SetValue(TestData[i].health)
-				BossFrame.HealthBackground:SetMinMaxValues(0, TestData[i].maxHealth)
-				BossFrame.HealthBackground:SetValue(TestData[i].missingHealth)
-				BossFrame.HealthBackground:SetStatusBarColor(GetTestUnitColour(i, HealthBarDB.Background, HealthBarDB.ColourBackgroundByClass, HealthBarDB.BackgroundOpacity))
-				BossFrame.Health:SetStatusBarColor(GetTestUnitColour(i, HealthBarDB.Foreground, HealthBarDB.ColourByClass, HealthBarDB.ForegroundOpacity))
-			end
-
 			if (updateAll or element == "Frame" or element == "HealPrediction") and BossFrame.HealthPrediction then
 				UUF:UpdateUnitHealPrediction(BossFrame, "boss" .. i)
 				local maxHealth = TestData[i].maxHealth
@@ -499,6 +488,19 @@ local function UpdateBossTestEnvironment(element)
 						if showOverAbsorb then BossFrame.HealthPrediction.overDamageAbsorb.Clip:Show() else BossFrame.HealthPrediction.overDamageAbsorb.Clip:Hide() end
 					end
 				end
+			end
+
+			if (updateAll or element == "Frame" or element == "HealthBar") and BossFrame.Health then
+				if not updateAll then UUF:UpdateUnitHealthBar(BossFrame, "boss" .. i) end
+				local HealthBarDB = BossDB.HealthBar
+				BossFrame.Health:SetMinMaxValues(0, TestData[i].maxHealth)
+				BossFrame.Health:SetValue(TestData[i].health, Enum.StatusBarInterpolation.Immediate)
+				BossFrame.Health:Show()
+				BossFrame.HealthBackground:SetMinMaxValues(0, TestData[i].maxHealth)
+				BossFrame.HealthBackground:SetValue(TestData[i].missingHealth, Enum.StatusBarInterpolation.Immediate)
+				BossFrame.HealthBackground:Show()
+				BossFrame.HealthBackground:SetStatusBarColor(GetTestUnitColour(i, HealthBarDB.Background, HealthBarDB.ColourBackgroundByClass, HealthBarDB.BackgroundOpacity))
+				BossFrame.Health:SetStatusBarColor(GetTestUnitColour(i, HealthBarDB.Foreground, HealthBarDB.ColourByClass, HealthBarDB.ForegroundOpacity))
 			end
 
 			if (updateAll or element == "Portrait") and BossFrame.Portrait then
