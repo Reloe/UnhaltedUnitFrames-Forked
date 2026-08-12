@@ -511,7 +511,10 @@ function UUF:GetUnitClassColour(unit, unitFrame, configuredUnit)
     end
 
     local success, color = pcall(C_ClassColor.GetClassColor, class)
-    if success and color then return true, color:GetRGB() end
+    if success and color then
+        local r, g, b = color:GetRGB()
+        return true, r, g, b, color
+    end
 end
 
 function UUF:GetUnitColour(unit, unitFrame)
@@ -524,6 +527,21 @@ function UUF:GetUnitColour(unit, unitFrame)
         return r, g, b
     end
     return 1, 1, 1
+end
+
+function UUF:GetUnitColourText(unit, text, unitFrame)
+    local hasClassColour, r, g, b, color = UUF:GetUnitClassColour(unit, unitFrame, unit)
+    if hasClassColour then
+        if color then return color:WrapTextInColorCode(text) end
+        return CreateColor(r, g, b):WrapTextInColorCode(text)
+    end
+
+    local reaction = UnitReaction(unit, "player")
+    if reaction and not UUF:IsSecretValue(reaction) and UUF.db.profile.General.Colours.Reaction[reaction] then
+        local reactionColour = UUF.db.profile.General.Colours.Reaction[reaction]
+        return CreateColor(unpack(reactionColour)):WrapTextInColorCode(text)
+    end
+    return CreateColor(1, 1, 1):WrapTextInColorCode(text)
 end
 
 function UUF:GetClassColour(unitFrame)

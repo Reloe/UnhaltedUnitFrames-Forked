@@ -490,17 +490,15 @@ end
 
 oUF.Tags.Methods["maxhp:abbr:colour"] = function(unit)
     if not unit or not UnitExists(unit) then return "" end
-    local classColourR, classColourG, classColourB = UUF:GetUnitColour(unit)
     local unitMaxHealth = UnitHealthMax(unit)
     if unitMaxHealth then
-        return string.format("|cff%02x%02x%02x%s|r", classColourR * 255, classColourG * 255, classColourB * 255, AbbreviateValue(unitMaxHealth))
+        return UUF:GetUnitColourText(unit, AbbreviateValue(unitMaxHealth))
     end
 end
 
 oUF.Tags.Methods["name:colour"] = function(unit)
-    local classColourR, classColourG, classColourB = UUF:GetUnitColour(unit)
     local unitName = UnitName(unit) or ""
-    return string.format("|cff%02x%02x%02x%s|r", classColourR * 255, classColourG * 255, classColourB * 255, unitName)
+    return UUF:GetUnitColourText(unit, unitName)
 end
 
 oUF.Tags.Methods["name:target"] = function(unit)
@@ -514,9 +512,8 @@ oUF.Tags.Methods["name:target:colour"] = function(unit)
     local targetUnit = unit and (unit .. "target")
     local arrowSeperator = UUF.TOT_SEPARATOR
     if not targetUnit or not UnitExists(targetUnit) then return "" end
-    local classColourR, classColourG, classColourB = UUF:GetUnitColour(targetUnit)
     local unitName = UnitName(targetUnit) or ""
-    return string.format(" %s |cff%02x%02x%02x%s|r", arrowSeperator, classColourR * 255, classColourG * 255, classColourB * 255, unitName)
+    return " " .. arrowSeperator .. " " .. UUF:GetUnitColourText(targetUnit, unitName)
 end
 
 oUF.Tags.Methods["resetcolor"] = function(unit)
@@ -550,9 +547,8 @@ end
 
 for i = 1, 25 do
     oUF.Tags.Methods["name:short:" .. i .. ":colour"] = function(unit)
-        local classColourR, classColourG, classColourB = UUF:GetUnitColour(unit)
         local shortenedName = ShortenUnitName(unit, i)
-        return string.format("|cff%02x%02x%02x%s|r", classColourR * 255, classColourG * 255, classColourB * 255, shortenedName)
+        return UUF:GetUnitColourText(unit, shortenedName)
     end
 end
 
@@ -570,10 +566,9 @@ for i = 1, 25 do
     oUF.Tags.Methods["name:target:short:" .. i .. ":colour"] = function(unit)
         local targetUnit = unit and (unit .. "target")
         if not targetUnit or not UnitExists(targetUnit) then return "" end
-        local classColourR, classColourG, classColourB = UUF:GetUnitColour(targetUnit)
         local shortenedName = ShortenUnitName(targetUnit, i)
         local arrowSeperator = UUF.TOT_SEPARATOR
-        return string.format(" %s |cff%02x%02x%02x%s|r", arrowSeperator, classColourR * 255, classColourG * 255, classColourB * 255, shortenedName)
+        return " " .. arrowSeperator .. " " .. UUF:GetUnitColourText(targetUnit, shortenedName)
     end
 end
 
