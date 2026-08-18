@@ -37,10 +37,20 @@ end
 function UUF:UpdateAFKDNDIndicatorState(unitFrame, unit)
 	if not unitFrame or not unitFrame.AFKDNDIndicator then return end
 	local stateUnit = unit == "partyplayer" and "player" or unit
-	if UnitIsAFK(stateUnit) then
+	local isAFK = UnitIsAFK(stateUnit)
+	if UUF:IsSecretValue(isAFK) then
+		unitFrame.AFKDNDIndicator:Hide()
+		return
+	elseif isAFK then
 		unitFrame.AFKDNDIndicator:SetText("AFK")
 		unitFrame.AFKDNDIndicator:Show()
-	elseif UnitIsDND(stateUnit) then
+		return
+	end
+
+	local isDND = UnitIsDND(stateUnit)
+	if UUF:IsSecretValue(isDND) then
+		unitFrame.AFKDNDIndicator:Hide()
+	elseif isDND then
 		unitFrame.AFKDNDIndicator:SetText("DND")
 		unitFrame.AFKDNDIndicator:Show()
 	else
