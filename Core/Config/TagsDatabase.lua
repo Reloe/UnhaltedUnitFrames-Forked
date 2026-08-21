@@ -825,5 +825,24 @@ function UUF:FetchTagData(queriedDB)
 end
 
 function UUFG:GetTags()
+    oUF.Tags.RefreshMethods = function(TagsObject, tag)
+        if not tag then return end
+        local TagPattern = "%[" .. tag:gsub("[%^%$%(%)%%%.%*%+%-%?]", "%%%1") .. "%]"
+        for ObjectIndex = 1, #oUF.objects do
+            local unitFrame = oUF.objects[ObjectIndex]
+            if unitFrame.Tags then
+                for tagName, fontString in next, unitFrame.Tags do
+                    local TagString = fontString.UUFTagString
+                    if TagString then
+                        TagString = TagString:gsub("%[.-$>", "["):gsub("%(.-%)%]", "]"):gsub("<$.-%]", "]")
+                    end
+                    if TagString and TagString:match(TagPattern) then
+                        fontString.UUFTagString = nil
+                        UUF:UpdateUnitTag(unitFrame, fontString.UUFTagUnit, tagName)
+                    end
+                end
+            end
+        end
+    end
     return oUF.Tags
 end
