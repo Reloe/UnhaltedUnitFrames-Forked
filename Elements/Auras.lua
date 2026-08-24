@@ -5,8 +5,8 @@ local AuraUnitFrames = setmetatable({}, {__mode = "k"})
 local AuraEligibilityEventFrame = CreateFrame("Frame")
 local AuraContainerSerial = 0
 local AuraBorderOptions = {
-	[false] = {showIcon = false, showWhenHarmful = false, showWhenHelpful = false, style = AuraButtonBorderStyle.Color},
-	[true] = {showIcon = false, showWhenHarmful = true, showWhenHelpful = true, style = AuraButtonBorderStyle.Color},
+	[false] = {showIcon = false, showWhenHarmful = false, showWhenHelpful = false, style = Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset},
+	[true] = {showIcon = false, showWhenHarmful = true, showWhenHelpful = true, style = Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset},
 }
 local RaidAuraExcludedSpellIDs = {
 	[57723] = true, -- Exhaustion
@@ -154,7 +154,6 @@ local function UpdateAuraIconBorder(border, parent, shown)
 	if not border then return end
 	for _, texture in pairs(border) do
 		texture:ClearAllPoints()
-		texture:SetColorTexture(0, 0, 0, 1)
 		texture:SetShown(shown)
 	end
 	if not shown then return end
@@ -201,23 +200,23 @@ local function UpdateAuraButtonCooldown(container, button)
 end
 
 local function UpdateAuraButtonTypeBorder(container, button)
-	local showBorder = container.showBuffBorder or container.showDebuffBorder
-	if showBorder and not button.Border then
-		button.Border = button:CreateTexture(nil, "OVERLAY")
-		button.Border:SetAllPoints()
-	end
-	if not button.Border then return end
-	button.Border:SetShown(showBorder)
-	if showBorder then
-		button:ClearDispelTypeTextures()
-		button:AddDispelTypeTexture(button.Border, {
-			showIcon = container.showBorderSymbol,
-			showWhenHarmful = container.showDebuffBorder,
-			showWhenHelpful = container.showBuffBorder,
-			style = container.borderStyle,
-		})
+	local showType = container.showBuffBorder or container.showDebuffBorder
+	button:ClearDispelTypeTextures()
+	if not button.IconBorder then return end
+	if showType then
+		for _, texture in pairs(button.IconBorder) do
+			texture:SetColorTexture(1, 1, 1, 1) -- white base so vertex tint shows true color
+			button:AddDispelTypeTexture(texture, {
+				showWhenHarmful = container.showDebuffBorder,
+				showWhenHelpful = container.showBuffBorder,
+				showWithoutDispelType = true,
+				style = Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset,
+			})
+		end
 	else
-		button:ClearDispelTypeTextures()
+		for _, texture in pairs(button.IconBorder) do
+			texture:SetColorTexture(0, 0, 0, 1)
+		end
 	end
 end
 
@@ -283,6 +282,7 @@ local function CreateAuraButton(container, unitFrame, unit, AuraDB, DurationDB, 
 	button:SetIcon(icon)
 	button.IconBorder = CreateAuraIconBorder(button)
 	UpdateAuraIconBorder(button.IconBorder, button, container.showIconBorder ~= false)
+	UpdateAuraButtonTypeBorder(container, button)
 
 	local textParent
 	if container.showCount or container.showDuration then
@@ -313,18 +313,6 @@ local function CreateAuraButton(container, unitFrame, unit, AuraDB, DurationDB, 
 		})
 		ApplyFontStyle(duration, button, DurationDB.Layout, GetAuraDurationFontSize(DurationDB, AuraDB), DurationDB.Colour, unitFrame, unit)
 		duration:SetShown(not DurationDB.HideDuration)
-	end
-
-	if container.showBuffBorder or container.showDebuffBorder then
-		local border = button:CreateTexture(nil, "OVERLAY")
-		border:SetAllPoints()
-		button.Border = border
-		button:AddDispelTypeTexture(border, {
-			showIcon = container.showBorderSymbol,
-			showWhenHarmful = container.showDebuffBorder,
-			showWhenHelpful = container.showBuffBorder,
-			style = container.borderStyle,
-		})
 	end
 
 	if container.cancelButton then
@@ -411,7 +399,6 @@ local function CreateAuraContainer(unitFrame, unit, auraKey)
 	container.inverseCooldownSwipe = true
 	container.showBuffBorder = true
 	container.showDebuffBorder = true
-	container.borderStyle = AuraButtonBorderStyle.Color
 	container.durationDB = AuraDB and GetAuraDurationDB(unitFrame, unit, AuraDB)
 	return container
 end
@@ -438,7 +425,6 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	container.showIconBorder = AuraDB.Border ~= false
 	container.showBuffBorder = AuraDB.ShowType == true
 	container.showDebuffBorder = AuraDB.ShowType == true
-	container.borderStyle = AuraButtonBorderStyle.Color
 	container.durationDB = DurationDB
 	container.durationFormatter = nil
 	local filters, playerTokens, otherTokens, showAllPlayer, showAllOthers = GetAuraFilters(AuraDB, auraType)
