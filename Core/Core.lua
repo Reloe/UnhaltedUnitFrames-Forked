@@ -41,4 +41,13 @@ function UnhaltedUnitFrames:OnEnable()
     UUF:SpawnUnitFrame("party")
     UUF:SpawnUnitFrame("raid")
 	if SCMAPI and SCMAPI.RegisterAnchorParents then SCMAPI.RegisterAnchorParents("UnhaltedUnitFrames", UUF.SCMAnchors) end
+
+	-- Frame creation applies most settings, but several elements derive their
+	-- draw order and visibility from parent frames that are not available until
+	-- every unit frame has been spawned.  Re-apply the active profile on the
+	-- next frame so a reload has the same fully-applied state as editing a
+	-- setting in the configuration UI.
+	C_Timer.After(0, function()
+		UUF:RefreshProfiles()
+	end)
 end
