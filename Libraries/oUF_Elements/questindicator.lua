@@ -2,12 +2,12 @@ local _, ns = ...
 local oUF = ns.oUF
 
 local function Update(self, event, unit)
-	if unit and unit ~= self.unit then return end
+	if not unit or unit ~= self.__unit then return end
 
 	local element = self.QuestUnitIndicator
 	if element.PreUpdate then element:PreUpdate() end
 
-	local isQuestUnit = UnitIsQuestBoss(self.unit) or C_QuestLog.UnitIsRelatedToActiveQuest(self.unit)
+	local isQuestUnit = UnitIsQuestBoss(unit) or C_QuestLog.UnitIsRelatedToActiveQuest(unit)
 	element:SetShown(isQuestUnit)
 
 	if element.PostUpdate then return element:PostUpdate(isQuestUnit) end
@@ -18,7 +18,7 @@ local function Path(self, ...)
 end
 
 local function ForceUpdate(element)
-	return Path(element.__owner, "ForceUpdate", element.__owner.unit)
+	return Path(element.__owner, "ForceUpdate", element.__owner.__unit)
 end
 
 local function Enable(self)
