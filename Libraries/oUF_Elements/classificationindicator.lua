@@ -37,8 +37,7 @@ local ICONS = {
 }
 
 local function Update(self, event, unit)
-	if(unit ~= self.unit) then return end
-
+	if(not unit or unit ~= self.__unit) then return end
 	local element = self.ClassificationIndicator
 
 	--[[ Callback: ClassificationIndicator:PreUpdate(unit)
