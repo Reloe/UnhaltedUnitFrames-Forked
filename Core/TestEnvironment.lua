@@ -404,6 +404,12 @@ function UUF:EnableTestGroupFrames(unit)
 		local UnitDB = UUF.db.profile.Units.raid
 		if not UnitDB or not UnitDB.Enabled then if UUF.RAID_CONTAINER then UUF.RAID_CONTAINER:Hide() end return end
 		if not UUF.RAID_CONTAINER then UUF:SpawnGroupFrame("raid") end
+		if UUF.RAID_HEADER_FALLBACK then
+			for _, raidFrame in ipairs(UUF.RAID_FRAMES) do
+				UnregisterUnitWatch(raidFrame)
+				raidFrame:Hide()
+			end
+		end
 		UUF:CreateRaidTestFrames()
 		for _, header in ipairs(UUF.RAID_HEADERS) do header:Hide() end
 		if UUF.AUGMENTATION_RAID_CONTAINER then UUF.AUGMENTATION_RAID_CONTAINER:Hide() end
