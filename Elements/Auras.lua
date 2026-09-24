@@ -61,7 +61,15 @@ AuraEligibilityEventFrame:RegisterEvent("UNIT_FACTION")
 AuraEligibilityEventFrame:RegisterEvent("UNIT_CONNECTION")
 AuraEligibilityEventFrame:RegisterEvent("UNIT_OTHER_PARTY_CHANGED")
 AuraEligibilityEventFrame:RegisterEvent("UNIT_PHASE")
+AuraEligibilityEventFrame:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
 AuraEligibilityEventFrame:SetScript("OnEvent", function(_, event, eventUnit)
+	-- Boss tokens can be reassigned without their frames hiding, so rebuild their cached aura assignments.
+	if event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
+		for unitFrame, unit in pairs(AuraUnitFrames) do
+			if UUF:GetNormalizedUnit(unit) == "boss" then UUF:UpdateUnitAuras(unitFrame, unitFrame:GetAttribute("unit") or unit) end
+		end
+		return
+	end
 	for unitFrame, unit in pairs(AuraUnitFrames) do
 		local unitToken = unitFrame.__unit
 		if not unitToken then unitToken = unit == "partyplayer" and "player" or unit end
