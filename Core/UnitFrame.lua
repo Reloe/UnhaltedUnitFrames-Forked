@@ -44,6 +44,7 @@ function UUF:CreateUnitFrame(unitFrame, unit)
 	if unitFrame:GetParent() == UUF.AUGMENTATION_RAID_HEADER then unitFrame.isAugmentationRaidFrame = true end
     local UnitDB = UUF:GetUnitDB(unitFrame, unit)
     local isPlayer = unit == "player"
+    local isPet = unit == "pet"
     local isTarget = unit == "target"
     local isFocus = unit == "focus"
     local isTargetTarget = unit == "targettarget"
@@ -71,6 +72,7 @@ function UUF:CreateUnitFrame(unitFrame, unit)
     if isPlayer then UUF:CreateUnitRestingIndicator(unitFrame, unit) end
     if isPlayer then UUF:CreateUnitPvPIndicator(unitFrame, unit) end
     if isPlayer then UUF:CreateUnitTotems(unitFrame, unit) end
+    if isPet then UUF:CreateUnitPetHappiness(unitFrame, unit) end
     if isTarget then UUF:CreateUnitClassificationIndicator(unitFrame, unit) end
     if isTarget then UUF:CreateUnitQuestIndicator(unitFrame, unit) end
 	UUF:CreateUnitAFKDNDIndicator(unitFrame, unit)
@@ -210,6 +212,7 @@ function UUF:UpdateUnitFrame(unitFrame, unit)
     local UnitDB = UUF:GetUnitDB(unitFrame, unit)
 	local frameUnit = unitFrame and unitFrame.UUFConfiguredUnit or unit
     local isPlayer = frameUnit == "player"
+    local isPet = frameUnit == "pet"
     local isTarget = frameUnit == "target"
     local isFocus = frameUnit == "focus"
     local isTargetTarget = frameUnit == "targettarget"
@@ -235,6 +238,7 @@ function UUF:UpdateUnitFrame(unitFrame, unit)
     if isPlayer then UUF:UpdateUnitRestingIndicator(unitFrame, unit) end
     if isPlayer then UUF:UpdateUnitPvPIndicator(unitFrame, unit) end
     if isPlayer then UUF:UpdateUnitTotems(unitFrame, unit) end
+    if isPet then UUF:UpdateUnitPetHappiness(unitFrame, unit) end
     if isTarget then UUF:UpdateUnitClassificationIndicator(unitFrame, unit) end
     if isTarget then UUF:UpdateUnitQuestIndicator(unitFrame, unit) end
 	UUF:UpdateUnitAFKDNDIndicator(unitFrame, unit)

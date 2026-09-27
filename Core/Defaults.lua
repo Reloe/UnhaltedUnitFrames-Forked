@@ -1299,7 +1299,12 @@ local Defaults = {
                     },
                     Threat = {
                         Enabled = false,
-                    }
+                    },
+                    PetHappiness = {
+                        Enabled = true,
+                        Position = "LEFT",
+                        Size = 16,
+                    },
                 },
                 Auras = {
                     FrameStrata = "LOW",

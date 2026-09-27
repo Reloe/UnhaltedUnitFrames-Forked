@@ -31,4 +31,5 @@
 	<Script file="Indicators/TargetGlow.lua"/>
 	<Script file="Indicators/Threat.lua"/>
 	<Script file="Indicators/Totems.lua"/>
+	<Script file="Indicators/PetHappiness.lua"/>
 </Ui>

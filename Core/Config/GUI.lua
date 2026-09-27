@@ -3353,6 +3353,39 @@ local function CreateTotemsIndicatorSettings(containerParent, unit, updateCallba
     RefreshTotemsIndicatorGUI()
 end
 
+local function CreatePetHappinessSettings(containerParent, updateCallback)
+	local PetHappinessDB = GetUnitDB("pet").Indicators.PetHappiness
+	local ToggleContainer = GUIWidgets.CreateInlineGroup(containerParent, "Pet Happiness Settings")
+	local LayoutContainer = GUIWidgets.CreateInlineGroup(containerParent, "Layout & Positioning")
+	local Toggle = AG:Create("CheckBox")
+	Toggle:SetLabel("Enable Pet Happiness")
+	Toggle:SetValue(PetHappinessDB.Enabled)
+	Toggle:SetRelativeWidth(1)
+	Toggle:SetCallback("OnValueChanged", function(_, _, value)
+		PetHappinessDB.Enabled = value
+		updateCallback()
+		GUIWidgets.DeepDisable(LayoutContainer, not value)
+	end)
+	ToggleContainer:AddChild(Toggle)
+
+	local PositionDropdown = AG:Create("Dropdown")
+	PositionDropdown:SetList({["LEFT"] = "Left", ["RIGHT"] = "Right"})
+	PositionDropdown:SetLabel("Position")
+	PositionDropdown:SetValue(PetHappinessDB.Position)
+	PositionDropdown:SetRelativeWidth(0.5)
+	PositionDropdown:SetCallback("OnValueChanged", function(_, _, value) PetHappinessDB.Position = value updateCallback() end)
+	LayoutContainer:AddChild(PositionDropdown)
+
+	local SizeSlider = AG:Create("Slider")
+	SizeSlider:SetLabel("Size")
+	SizeSlider:SetValue(PetHappinessDB.Size)
+	SizeSlider:SetSliderValues(8, 48, 1)
+	SizeSlider:SetRelativeWidth(0.5)
+	SizeSlider:SetCallback("OnValueChanged", function(_, _, value) PetHappinessDB.Size = value updateCallback() end)
+	LayoutContainer:AddChild(SizeSlider)
+	GUIWidgets.DeepDisable(LayoutContainer, not PetHappinessDB.Enabled)
+end
+
 local function CreateIndicatorSettings(containerParent, unit)
     local function SelectIndicatorTab(IndicatorContainer, _, IndicatorTab)
         SaveSubTab(unit, "Indicators", IndicatorTab)
@@ -3385,6 +3418,8 @@ local function CreateIndicatorSettings(containerParent, unit)
             CreateTargetIndicatorSettings(IndicatorContainer, unit, function() UpdateUnitSettings(unit, function() UUF:UpdateUnitTargetGlowIndicator(UUF[unit:upper()], unit) end, "Indicators") end)
         elseif IndicatorTab == "ThreatIndicator" then
             CreateThreatIndicatorSettings(IndicatorContainer, unit, function() UpdateUnitSettings(unit, function() UUF:UpdateUnitThreatIndicator(UUF[unit:upper()], unit) end, "Indicators") end)
+        elseif IndicatorTab == "PetHappiness" and unit == "pet" then
+            CreatePetHappinessSettings(IndicatorContainer, function() UpdateUnitSettings(unit, function() UUF:UpdateUnitPetHappiness(UUF.PET, unit) end, "Indicators") end)
         elseif IndicatorTab == "Totems" then
             CreateTotemsIndicatorSettings(IndicatorContainer, unit, function() UUF:UpdateUnitTotems(UUF[unit:upper()], unit) end)
         elseif IndicatorTab == "Quest" and unit == "target" then
@@ -3444,12 +3479,14 @@ local function CreateIndicatorSettings(containerParent, unit)
             { text = "Threat Indicator", value = "ThreatIndicator" },
         })
     elseif unit == "pet" then
-        IndicatorContainerTabGroup:SetTabs({
+        local petIndicatorTabs = {
             { text = "Raid Target Marker", value = "RaidTargetMarker" },
             { text = "Mouseover", value = "Mouseover" },
             { text = "Target Indicator", value = "TargetIndicator" },
             { text = "Threat Indicator", value = "ThreatIndicator" },
-        })
+        }
+        if UUF.HasPetHappiness then petIndicatorTabs[#petIndicatorTabs + 1] = { text = "Pet Happiness", value = "PetHappiness" } end
+        IndicatorContainerTabGroup:SetTabs(petIndicatorTabs)
     elseif unit == "targettarget" or unit == "focustarget" or unit == "boss" then
         IndicatorContainerTabGroup:SetTabs({
             { text = "Raid Target Marker", value = "RaidTargetMarker" },
@@ -3461,6 +3498,7 @@ local function CreateIndicatorSettings(containerParent, unit)
     IndicatorContainerTabGroup:SetCallback("OnGroupSelected", SelectIndicatorTab)
     local savedIndicatorTab = GetSavedSubTab(unit, "Indicators", "RaidTargetMarker")
     if unit == "pet" and savedIndicatorTab == "AFKDND" then savedIndicatorTab = "RaidTargetMarker" end
+    if unit == "pet" and savedIndicatorTab == "PetHappiness" and not UUF.HasPetHappiness then savedIndicatorTab = "RaidTargetMarker" end
     IndicatorContainerTabGroup:SelectTab(savedIndicatorTab)
     containerParent:AddChild(IndicatorContainerTabGroup)
 end
