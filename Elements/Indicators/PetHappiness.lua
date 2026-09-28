@@ -1,7 +1,7 @@
 local UUF = select(2, ...)
 local InterfaceVersion = select(4, GetBuildInfo())
 local IsForeverClient = InterfaceVersion > 16000 and InterfaceVersion < 20000
-local HasPetHappiness = type(GetPetHappiness) == "function" or IsForeverClient and C_StableInfo and type(C_StableInfo.GetStablePetInfo) == "function"
+local HasPetHappiness = type(GetPetHappiness) == "function" or IsForeverClient and (C_PetInfo and type(C_PetInfo.GetPetHappiness) == "function" or C_StableInfo and type(C_StableInfo.GetStablePetInfo) == "function")
 
 UUF.HasPetHappiness = not not HasPetHappiness
 
@@ -56,7 +56,9 @@ function UUF:UpdateUnitPetHappiness(unitFrame, unit)
 	end
 
 	local Happiness
-	if type(GetPetHappiness) == "function" then
+	if IsForeverClient and C_PetInfo and type(C_PetInfo.GetPetHappiness) == "function" then
+		Happiness = C_PetInfo.GetPetHappiness()
+	elseif type(GetPetHappiness) == "function" then
 		Happiness = GetPetHappiness()
 	elseif C_StableInfo and type(C_StableInfo.GetStablePetInfo) == "function" then
 		local PetInfo = C_StableInfo.GetStablePetInfo(1)
