@@ -1,5 +1,7 @@
 local _, UUF = ...
-local isRetail = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+local InterfaceVersion = select(4, GetBuildInfo())
+local IsForever = InterfaceVersion > 16000 and InterfaceVersion < 20000
+local IsRetail = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and not IsForever
 
 UUF.RangeEvtFrames = {}
 
@@ -221,6 +223,7 @@ local RangeSpells = {
 }
 
 local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook
+local FindSpellOverrideByID = C_SpellBook.FindSpellOverrideByID
 local playerClass = select(2, UnitClass("player"))
 local activeSpells = {
     enemy = {},
@@ -249,12 +252,15 @@ end
 local spellUpdateFrame = CreateFrame("Frame")
 spellUpdateFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 spellUpdateFrame:RegisterEvent("SPELLS_CHANGED")
+spellUpdateFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+spellUpdateFrame:RegisterEvent("TRAIT_CONFIG_UPDATED")
 spellUpdateFrame:SetScript("OnEvent", UpdateActiveSpells)
 
 local function UnitSpellRange(unit, spells)
 	local isNotInRange = false
 	for spellID in pairs(spells) do
-		local inRange = C_Spell.IsSpellInRange(spellID, unit)
+		local currentSpellID = FindSpellOverrideByID(spellID) or spellID
+		local inRange = C_Spell.IsSpellInRange(currentSpellID, unit)
 		if UUF:IsSecretValue(inRange) then
 			return inRange
 		elseif inRange then
@@ -279,7 +285,7 @@ end
 
 local function FriendlyIsInRange(unit, frame)
 	if UnitIsPlayer(unit) then
-		if isRetail then
+		if IsRetail then
 			if UnitPhaseReason(unit) then return false end
 		end
 	end
