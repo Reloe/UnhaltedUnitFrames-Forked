@@ -44,6 +44,9 @@ The following options are listed by priority. The first check that returns true 
 .colorTapping      - Use `self.colors.tapping` to color the bar if the unit isn't tapped by the player (boolean)
 .colorThreat       - Use `self.colors.threat[threat]` to color the bar based on the unit's threat status. `threat` is
                      defined by the first return of [UnitThreatSituation](https://warcraft.wiki.gg/wiki/API_UnitThreatSituation) (boolean)
+.colorHappiness    - Use `self.colors.happiness[happiness]` to color the bar based on the unit's happiness. `happiness` is
+                     defined by the first return of [C_PetInfo.GetPetHappiness](https://warcraft.wiki.gg/wiki/API:C_PetInfo.GetPetHappiness).
+                     Only available for the `pet` unit, and only in Forever game version (boolean)
 .colorClass        - Use `self.colors.class[class]` to color the bar based on unit class. `class` is defined by the
                      second return of [UnitClass](https://warcraft.wiki.gg/wiki/API_UnitClass) (boolean)
 .colorClassNPC     - Use `self.colors.class[class]` to color the bar if the unit is a NPC (boolean)
@@ -154,6 +157,9 @@ local Private = oUF.Private
 local STATE = {}
 
 local unitSelectionType = Private.unitSelectionType
+local GameVersion = Private.GameVersion
+
+local playerClass = UnitClassBase('player')
 
 local function UpdateColor(self, event, unit)
 	if(not unit or self.__unit ~= unit) then return end
@@ -165,7 +171,9 @@ local function UpdateColor(self, event, unit)
 	elseif(element.colorTapping and not UnitPlayerControlled(unit) and UnitIsTapDenied(unit)) then
 		color = self.colors.tapped
 	elseif(element.colorThreat and not UnitPlayerControlled(unit) and UnitThreatSituation('player', unit)) then
-		color =  self.colors.threat[UnitThreatSituation('player', unit)]
+		color = self.colors.threat[UnitThreatSituation('player', unit)]
+	elseif(element.colorHappiness and GameVersion.Forever and unit == 'pet' and playerClass == 'HUNTER' and C_PetInfo.GetPetHappiness()) then
+		color = self.colors.happiness[(C_PetInfo.GetPetHappiness())]
 	elseif(element.colorClass and (UnitIsPlayer(unit) or UnitInPartyIsAI(unit)))
 		or (element.colorClassNPC and not (UnitIsPlayer(unit) or UnitInPartyIsAI(unit)))
 		or (element.colorClassPet and UnitPlayerControlled(unit) and not UnitIsPlayer(unit)) then
@@ -331,6 +339,7 @@ local function shouldUpdatePredictionSize(self)
 
 	local horizontal = element:GetOrientation() == 'HORIZONTAL'
 	local size = horizontal and element:GetWidth() or element:GetHeight()
+	size = math.floor((size + 0.005) * 100) / 100 -- normalize floating point errors
 	if(horizontal ~= STATE[element].horizontal or size ~= STATE[element].size) then
 		STATE[element].horizontal = horizontal
 		STATE[element].size = size
@@ -512,6 +521,10 @@ local function Enable(self, unit)
 			self:RegisterEvent('UNIT_THREAT_LIST_UPDATE', ColorPath)
 		end
 
+		if(element.colorHappiness and GameVersion.Forever and unit == 'pet' and playerClass == 'HUNTER') then
+			self:RegisterEvent('UNIT_HAPPINESS', ColorPath)
+		end
+
 		if(element.HealingAll or element.HealingPlayer or element.HealingOther or element.OverHealIndicator) then
 			self:RegisterEvent('UNIT_HEAL_PREDICTION', Path)
 		end
@@ -533,24 +546,32 @@ local function Enable(self, unit)
 		end
 
 		if(element.HealingAll) then
+			element.HealingAll:Show()
+
 			if(element.HealingAll:IsObjectType('StatusBar') and not element.HealingAll:GetStatusBarTexture()) then
 				element.HealingAll:SetStatusBarTexture([[Interface\TargetingFrame\UI-StatusBar]])
 			end
 		end
 
 		if(element.HealingPlayer) then
+			element.HealingPlayer:Show()
+
 			if(element.HealingPlayer:IsObjectType('StatusBar') and not element.HealingPlayer:GetStatusBarTexture()) then
 				element.HealingPlayer:SetStatusBarTexture([[Interface\TargetingFrame\UI-StatusBar]])
 			end
 		end
 
 		if(element.HealingOther) then
+			element.HealingOther:Show()
+
 			if(element.HealingOther:IsObjectType('StatusBar') and not element.HealingOther:GetStatusBarTexture()) then
 				element.HealingOther:SetStatusBarTexture([[Interface\TargetingFrame\UI-StatusBar]])
 			end
 		end
 
 		if(element.OverHealIndicator) then
+			element.OverHealIndicator:Show()
+
 			if(element.OverHealIndicator:IsObjectType('Texture') and not element.OverHealIndicator:GetTexture()) then
 				element.OverHealIndicator:SetTexture([[Interface\RaidFrame\Shield-Overshield]])
 				element.OverHealIndicator:SetBlendMode('ADD')
@@ -558,18 +579,24 @@ local function Enable(self, unit)
 		end
 
 		if(element.DamageAbsorb) then
+			element.DamageAbsorb:Show()
+
 			if(element.DamageAbsorb:IsObjectType('StatusBar') and not element.DamageAbsorb:GetStatusBarTexture()) then
 				element.DamageAbsorb:SetStatusBarTexture([[Interface\TargetingFrame\UI-StatusBar]])
 			end
 		end
 
 		if(element.HealAbsorb) then
+			element.HealAbsorb:Show()
+
 			if(element.HealAbsorb:IsObjectType('StatusBar') and not element.HealAbsorb:GetStatusBarTexture()) then
 				element.HealAbsorb:SetStatusBarTexture([[Interface\TargetingFrame\UI-StatusBar]])
 			end
 		end
 
 		if(element.OverDamageAbsorbIndicator) then
+			element.OverDamageAbsorbIndicator:Show()
+
 			if(element.OverDamageAbsorbIndicator:IsObjectType('Texture') and not element.OverDamageAbsorbIndicator:GetTexture()) then
 				element.OverDamageAbsorbIndicator:SetTexture([[Interface\RaidFrame\Shield-Overshield]])
 				element.OverDamageAbsorbIndicator:SetBlendMode('ADD')
@@ -577,6 +604,8 @@ local function Enable(self, unit)
 		end
 
 		if(element.OverHealAbsorbIndicator) then
+			element.OverHealAbsorbIndicator:Show()
+
 			if(element.OverHealAbsorbIndicator:IsObjectType('Texture') and not element.OverHealAbsorbIndicator:GetTexture()) then
 				element.OverHealAbsorbIndicator:SetTexture([[Interface\RaidFrame\Absorb-Overabsorb]])
 				element.OverHealAbsorbIndicator:SetBlendMode('ADD')

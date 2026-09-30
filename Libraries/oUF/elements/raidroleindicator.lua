@@ -13,7 +13,9 @@ This element updates by changing the texture.
 
 ## Options
 
-.useAtlasSize - Makes the element use preprogrammed atlas' size instead of its set dimensions (boolean)
+.useAtlasSize    - (DEPRECATED) Makes the element use preprogrammed atlas' size instead of its set dimensions (boolean)
+.mainTankAtlas   - Overrides the default atlas texture for main tank (string)
+.mainAssistAtlas - Overrides the default atlas texture for main assist (string)
 
 ## Examples
 
@@ -28,6 +30,11 @@ This element updates by changing the texture.
 
 local _, ns = ...
 local oUF = ns.oUF
+local Private = oUF.Private
+
+local GameVersion = Private.GameVersion
+
+local STATE = {}
 
 local function Update(self, event)
 	local element = self.RaidRoleIndicator
@@ -42,26 +49,53 @@ local function Update(self, event)
 		element:PreUpdate()
 	end
 
-	local role, shouldShow
-	if(UnitInRaid(unit) ~= nil and not UnitHasVehicleUI(unit)) then
-		if(GetPartyAssignment('MAINTANK', unit)) then
-			role = 'MAINTANK'
-			shouldShow = true
-			element:SetAtlas('RaidFrame-Icon-MainTank', element.useAtlasSize)
-		elseif(GetPartyAssignment('MAINASSIST', unit)) then
-			role = 'MAINASSIST'
-			shouldShow = true
-			element:SetAtlas('RaidFrame-Icon-MainAssist', element.useAtlasSize)
-		end
-	end
+	local role -- TODO: remove in 12.1.5
 
-	element:SetShown(shouldShow)
+	if(GameVersion.PTR) then
+		-- we have to set the unit here, not during Enable, as the unit is not valid then
+		STATE[element].unit = unit
+
+		UnitFrameUtil.UpdateUnitFrameRoleIcon(STATE[element])
+	else
+		if(event == 'OnShow') then
+			STATE[element] = {}
+		end
+
+		local shouldShow
+		if(UnitInRaid(unit) ~= nil and not UnitHasVehicleUI(unit)) then
+			local isMainTank = GetPartyAssignment('MAINTANK', unit)
+			if(issecretvalue(isMainTank)) then
+				isMainTank = STATE[element].isMainTank
+			else
+				STATE[element].isMainTank = isMainTank
+			end
+
+			local isMainAssist = GetPartyAssignment('MAINASSIST', unit)
+			if(issecretvalue(isMainAssist)) then
+				isMainAssist = STATE[element].isMainAssist
+			else
+				STATE[element].isMainAssist = isMainAssist
+			end
+
+			if(isMainTank) then
+				role = 'MAINTANK'
+				shouldShow = true
+				element:SetAtlas('RaidFrame-Icon-MainTank', element.useAtlasSize)
+			elseif(isMainAssist) then
+				role = 'MAINASSIST'
+				shouldShow = true
+				element:SetAtlas('RaidFrame-Icon-MainAssist', element.useAtlasSize)
+			end
+		end
+
+		element:SetShown(shouldShow)
+	end
 
 	--[[ Callback: RaidRoleIndicator:PostUpdate(role)
 	Called after the element has been updated.
 
 	* self - the RaidRoleIndicator element
-	* role - the unit's raid assignment (string?)['MAINTANK', 'MAINASSIST']
+	* role - (DEPRECATED) the unit's raid assignment (string?)['MAINTANK', 'MAINASSIST']
 	--]]
 	if(element.PostUpdate) then
 		return element:PostUpdate(role)
@@ -89,7 +123,26 @@ local function Enable(self)
 		element.__owner = self
 		element.ForceUpdate = ForceUpdate
 
-		self:RegisterEvent('GROUP_ROSTER_UPDATE', Path, true)
+		if(GameVersion.PTR) then
+			STATE[element] = {
+				roleIcon = element,
+				optionTable = {
+					displayRaidRoleIcon = true,
+					textureMap = {
+						MAINTANK = element.mainTankAtlas,
+						MAINASSIST = element.mainAssistAtlas,
+						VEHICLE = '', -- otherwise it will show a vehicle icon (why Blizzard?)
+					}
+				}
+			}
+
+			self:RegisterEvent('PLAYER_ROLES_ASSIGNED', Path, true)
+		else
+			STATE[element] = {}
+
+			self:RegisterEvent('GROUP_ROSTER_UPDATE', Path, true)
+			self:RegisterEvent('PLAYER_REGEN_ENABLED', Path, true)
+		end
 
 		return true
 	end
@@ -100,7 +153,12 @@ local function Disable(self)
 	if(element) then
 		element:Hide()
 
-		self:UnregisterEvent('GROUP_ROSTER_UPDATE', Path)
+		if(GameVersion.PTR) then
+			self:UnregisterEvent('PLAYER_ROLES_ASSIGNED', Path)
+		else
+			self:UnregisterEvent('GROUP_ROSTER_UPDATE', Path)
+			self:UnregisterEvent('PLAYER_REGEN_ENABLED', Path)
+		end
 	end
 end
 
