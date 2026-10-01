@@ -3368,6 +3368,16 @@ local function CreatePetHappinessSettings(containerParent, updateCallback)
 	end)
 	ToggleContainer:AddChild(Toggle)
 
+	local OnlyShowWhenNotHappyToggle = AG:Create("CheckBox")
+	OnlyShowWhenNotHappyToggle:SetLabel("Only Show When Not Happy")
+	OnlyShowWhenNotHappyToggle:SetValue(PetHappinessDB.OnlyShowWhenNotHappy)
+	OnlyShowWhenNotHappyToggle:SetRelativeWidth(1)
+	OnlyShowWhenNotHappyToggle:SetCallback("OnValueChanged", function(_, _, value)
+		PetHappinessDB.OnlyShowWhenNotHappy = value
+		updateCallback()
+	end)
+	ToggleContainer:AddChild(OnlyShowWhenNotHappyToggle)
+
 	local PositionDropdown = AG:Create("Dropdown")
 	PositionDropdown:SetList({["LEFT"] = "Left", ["RIGHT"] = "Right"})
 	PositionDropdown:SetLabel("Position")

@@ -1302,6 +1302,7 @@ local Defaults = {
                     },
                     PetHappiness = {
                         Enabled = true,
+                        OnlyShowWhenNotHappy = false,
                         Position = "LEFT",
                         Size = 16,
                     },

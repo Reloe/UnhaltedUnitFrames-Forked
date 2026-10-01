@@ -69,6 +69,10 @@ function UUF:UpdateUnitPetHappiness(unitFrame, unit)
 		HappinessIndicator:Hide()
 		return
 	end
+	if PetHappinessDB.OnlyShowWhenNotHappy and Happiness == 3 then
+		HappinessIndicator:Hide()
+		return
+	end
 
 	HappinessIndicator.Icon:SetTexCoord(unpack(TextureCoordinates))
 	HappinessIndicator:Show()
