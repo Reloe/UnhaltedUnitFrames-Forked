@@ -38,7 +38,7 @@ UUF.LSM:Register("statusbar", "Skyline", "Interface\\AddOns\\UnhaltedUnitFrames\
 UUF.LSM:Register("statusbar", "Stripes", "Interface\\AddOns\\UnhaltedUnitFrames\\Media\\Textures\\Stripes.png")
 UUF.LSM:Register("statusbar", "Thin Stripes", "Interface\\AddOns\\UnhaltedUnitFrames\\Media\\Textures\\ThinStripes.png")
 
-UUF.LSM:Register("background", "Dragonflight", "Interface\\AddOns\\UnhaltedUnitFrames\\Media\\Textures\\Backgrounds\\Dragonflight_BG.tga")
+UUF.LSM:Register("background", "Dragonflight", "Interface\\AddOns\\UnhaltedUnitFrames\\Media\\Textures\\Dragonflight.tga")
 
 UUF.LSM:Register("font", "Expressway", "Interface\\AddOns\\UnhaltedUnitFrames\\Media\\Fonts\\Expressway.ttf")
 UUF.LSM:Register("font", "Avante", "Interface\\AddOns\\UnhaltedUnitFrames\\Media\\Fonts\\Avante.ttf")
